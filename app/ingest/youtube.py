@@ -52,10 +52,13 @@ async def extract_youtube(url: str) -> dict:
     raw_content = ""
     try:
         from youtube_transcript_api import YouTubeTranscriptApi
-        transcript_list = await asyncio.to_thread(
-            YouTubeTranscriptApi.get_transcript, video_id
-        )
-        raw_content = " ".join(entry["text"] for entry in transcript_list)
+
+        def _fetch_transcript(vid: str) -> str:
+            api = YouTubeTranscriptApi()
+            transcript = api.fetch(vid)
+            return " ".join(segment.text for segment in transcript)
+
+        raw_content = await asyncio.to_thread(_fetch_transcript, video_id)
     except Exception:
         # Fallback: use description if no transcript
         raw_content = meta.get("description", "")
