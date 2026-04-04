@@ -1,6 +1,6 @@
 """Tests for vector search, wiki search, and query synthesis."""
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import numpy as np
@@ -26,7 +26,7 @@ async def insert_source(db, source_id: str, title: str = "Test Source", url: str
     if url is None:
         url = f"https://example.com/{source_id}"
     if ingested_at is None:
-        ingested_at = datetime.utcnow().isoformat()
+        ingested_at = datetime.now(timezone.utc).isoformat()
     await db.execute(
         "INSERT INTO sources (id, url, source_type, title, ingested_at, content_hash) VALUES (?, ?, ?, ?, ?, ?)",
         (source_id, url, "article", title, ingested_at, f"hash-{source_id}"),
@@ -121,7 +121,7 @@ async def test_vector_search_time_boost(setup_temp_db):
     query_emb = make_embedding(42, dims=10)
     same_emb = make_embedding(42, dims=10)  # identical to query for both
 
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     recent = now.isoformat()
     old = (now - timedelta(days=60)).isoformat()
 

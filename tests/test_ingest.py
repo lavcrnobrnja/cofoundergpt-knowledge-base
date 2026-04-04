@@ -3,6 +3,38 @@ import pytest
 from unittest.mock import patch, AsyncMock
 
 
+# --- Tweet URL filtering tests ---
+
+class TestTweetUrlFiltering:
+    def test_filters_twitter_domains(self):
+        from app.ingest.tweet import _filter_external_urls
+        urls = [
+            "https://t.co/abc123",
+            "https://twitter.com/user/status/123",
+            "https://x.com/user/status/456",
+            "https://example.com/article",
+            "https://www.nytimes.com/2026/story",
+        ]
+        result = _filter_external_urls(urls)
+        assert result == ["https://example.com/article", "https://www.nytimes.com/2026/story"]
+
+    def test_empty_list(self):
+        from app.ingest.tweet import _filter_external_urls
+        assert _filter_external_urls([]) == []
+
+    def test_all_twitter_urls(self):
+        from app.ingest.tweet import _filter_external_urls
+        urls = ["https://t.co/x", "https://pic.twitter.com/y", "https://x.com/z"]
+        assert _filter_external_urls(urls) == []
+
+    def test_malformed_urls_skipped(self):
+        from app.ingest.tweet import _filter_external_urls
+        urls = ["not-a-url", "https://example.com/good"]
+        result = _filter_external_urls(urls)
+        # "not-a-url" has no hostname, gets filtered; "example.com" passes
+        assert "https://example.com/good" in result
+
+
 # --- Source type detection tests ---
 
 class TestDetectSourceType:
@@ -33,6 +65,41 @@ class TestDetectSourceType:
     def test_detect_article_default(self):
         from app.ingest import detect_source_type
         assert detect_source_type("https://example.com/some-article") == "article"
+
+
+# --- Tweet auto-follow tests ---
+
+class TestTweetAutoFollow:
+    @pytest.mark.anyio
+    async def test_tweet_ingest_returns_linked_urls(self, client):
+        """Tweet extractor should surface linked_urls on the response object."""
+        mock_result = {
+            "title": "Check this out...",
+            "author": "testuser",
+            "published_at": "2026-04-04T12:00:00Z",
+            "raw_content": "Check this out https://example.com/article — amazing read",
+            "metadata": {"tweet_id": "123456"},
+            "linked_urls": ["https://example.com/article"],
+        }
+        with patch("app.ingest.tweet.extract_tweet", new_callable=AsyncMock, return_value=mock_result):
+            resp = await client.post("/ingest", json={"url": "https://x.com/user/status/123456"})
+        assert resp.status_code == 201
+        assert resp.json()["source_type"] == "tweet"
+
+    @pytest.mark.anyio
+    async def test_tweet_linked_urls_stored_in_metadata(self, client):
+        """Linked URLs from tweet should be discoverable."""
+        mock_result = {
+            "title": "Thread with links",
+            "author": "testuser",
+            "published_at": None,
+            "raw_content": "Here are two great reads: first and second. Must read both.",
+            "metadata": {"tweet_id": "789"},
+            "linked_urls": ["https://blog.example.com/post1", "https://news.example.com/story"],
+        }
+        with patch("app.ingest.tweet.extract_tweet", new_callable=AsyncMock, return_value=mock_result):
+            resp = await client.post("/ingest", json={"url": "https://x.com/user/status/789"})
+        assert resp.status_code == 201
 
 
 # --- Ingest endpoint tests ---

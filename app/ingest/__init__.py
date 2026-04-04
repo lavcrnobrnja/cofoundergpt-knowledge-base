@@ -127,12 +127,15 @@ async def ingest_source(request: IngestRequest) -> tuple[IngestResponse, int]:
         )
         await db.commit()
 
-    return IngestResponse(
+    response = IngestResponse(
         id=source_id,
         title=extracted.get("title"),
         source_type=source_type,
         status="pending",
-    ), 201
+    )
+    # Attach linked_urls for tweet auto-follow (consumed by main.py)
+    response._linked_urls = extracted.get("linked_urls", [])
+    return response, 201
 
 
 async def _extract(source_type: str, url: str, request: IngestRequest) -> dict:

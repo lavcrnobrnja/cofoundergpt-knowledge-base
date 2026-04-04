@@ -65,8 +65,37 @@ async def ingest(request: IngestRequest, background_tasks: BackgroundTasks):
         # Trigger enrichment in background
         from app.enrichment.pipeline import run_enrichment
         background_tasks.add_task(run_enrichment, response.id)
-        
+
+        # Tweet auto-follow: ingest linked external URLs (depth 1)
+        linked_urls = getattr(response, '_linked_urls', [])
+        if linked_urls:
+            background_tasks.add_task(_auto_follow_urls, linked_urls, request.user_context)
+
     return _JSONResponse(content=response.model_dump(), status_code=status_code)
+
+
+async def _auto_follow_urls(urls: list[str], user_context: str | None = None):
+    """Auto-ingest URLs found in tweets (depth 1 — no recursion).
+    
+    Each URL is ingested as a separate source. If extraction fails
+    (e.g. paywalled article), it's silently skipped.
+    """
+    import logging
+    logger = logging.getLogger(__name__)
+    for url in urls[:5]:  # Cap at 5 linked URLs per tweet
+        try:
+            from app.ingest import ingest_source
+            from app.models import IngestRequest
+            linked_request = IngestRequest(url=url, user_context=user_context)
+            linked_response, linked_status = await ingest_source(linked_request)
+            if linked_status == 201:
+                from app.enrichment.pipeline import run_enrichment
+                await run_enrichment(linked_response.id)
+                logger.info(f"Auto-followed URL from tweet: {url} → {linked_response.id}")
+            else:
+                logger.info(f"Auto-follow URL deduped: {url}")
+        except Exception as e:
+            logger.warning(f"Auto-follow failed for {url}: {e}")
 
 
 @app.get("/sources/{source_id}/pipeline")
