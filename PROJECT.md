@@ -9,10 +9,15 @@ Python 3.13 + FastAPI + SQLite WAL + google-genai
 8555
 
 ## Key Files
-- `app/main.py` — FastAPI app, /health, /stats endpoints
+- `app/main.py` — FastAPI app, all endpoints (health, stats, ingest, query, wiki, sources CRUD)
 - `app/database.py` — SQLite schema (6 tables, 9 indexes)
 - `app/config.py` — API keys, model names, paths
 - `app/models.py` — Pydantic request/response schemas
+- `app/compile/compiler.py` — Wiki page compilation via Gemini Pro
+- `app/compile/prompts.py` — Compilation prompt template
+- `app/enrichment/pipeline.py` — 4-stage enrichment + regenerate_index()
+- `app/search.py` — Vector search + wiki search
+- `app/synthesis.py` — Context assembly + Gemini Pro synthesis
 
 ## How to Run
 ```
@@ -25,14 +30,13 @@ source .venv/bin/activate && pytest -v
 ```
 
 ## Current State
-Step 4 complete — Vector search + wiki search + query synthesis. POST /query endpoint accepts a question and returns a synthesized answer from Gemini Pro with cited sources, relevant wiki pages, and related topics. Search uses cosine similarity with 30-day half-life time boost and per-source deduplication. 41 tests passing.
+Step 5 complete — Compile layer, wiki endpoints, and source CRUD. 58 tests passing.
 
-Previous: Step 3 — 4-stage enrichment pipeline (metadata, summary, extraction, vectors) with Gemini Flash LLM and embedding + similarity gate for topics.
+- **Compile layer**: `compile_topic(slug)` compiles a wiki page from linked sources via Gemini Pro, saves to DB + disk, re-embeds, regenerates index. `compile_nightly()` compiles all stale topics. Detects SPLIT_SUGGESTED in LLM output.
+- **Wiki endpoints**: GET /wiki (list), GET /wiki/{slug} (detail + linked sources), POST /wiki/{slug}/compile (force recompile), POST /compile/nightly (batch stale)
+- **Source CRUD**: GET /sources (list + type filter), GET /sources/{id} (detail + entities), PATCH /sources/{id} (edit allowed fields), DELETE /sources/{id} (cascade + reindex), POST /sources/{id}/re-enrich, POST /sources/re-enrich-all
 
-## Key Files (Search/Query)
-- `app/search.py` — vector_search (chunks) + wiki_search (pages), time-boosted ranking
-- `app/synthesis.py` — context assembly + Gemini Pro synthesis
-- `tests/test_search.py` — 9 tests covering search, dedup, time boost, synthesis, endpoint
+Previous: Step 4 — Vector search + wiki search + query synthesis (POST /query).
 
 ## DO NOT MODIFY
 - Schema (without migration)
