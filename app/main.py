@@ -6,6 +6,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, BackgroundTasks
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.config import DB_PATH
 from app.database import init_db, get_db
@@ -332,7 +333,7 @@ async def re_enrich_all(background_tasks: BackgroundTasks):
 
 
 @app.get("/stats", response_model=StatsResponse)
-async def stats():
+async def stats():  # NOTE: Static mount is AFTER this (last in file)
     """Database statistics."""
     async with get_db() as db:
         # Total sources
@@ -365,3 +366,10 @@ async def stats():
         total_wiki_pages=total_wiki_pages,
         stale_topics=stale_topics,
     )
+
+
+# --- Static Dashboard (MUST be after all API routes) ---
+import pathlib as _pathlib
+_static_dir = _pathlib.Path(__file__).resolve().parent.parent / "static"
+if _static_dir.is_dir():
+    app.mount("/", StaticFiles(directory=str(_static_dir), html=True), name="static")
