@@ -4,9 +4,11 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
+from fastapi.responses import JSONResponse as _JSONResponse
+
 from app.config import DB_PATH
 from app.database import init_db, get_db
-from app.models import HealthResponse, StatsResponse
+from app.models import HealthResponse, StatsResponse, IngestRequest, IngestResponse
 
 
 _start_time: float = 0.0
@@ -48,6 +50,14 @@ async def health():
         db_size_mb=round(db_size, 4),
         uptime_seconds=round(time.time() - _start_time, 2),
     )
+
+
+@app.post("/ingest", response_model=IngestResponse, status_code=201)
+async def ingest(request: IngestRequest):
+    """Ingest a new source (URL or text)."""
+    from app.ingest import ingest_source
+    response, status_code = await ingest_source(request)
+    return _JSONResponse(content=response.model_dump(), status_code=status_code)
 
 
 @app.get("/stats", response_model=StatsResponse)
