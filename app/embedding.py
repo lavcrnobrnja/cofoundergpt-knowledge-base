@@ -66,17 +66,35 @@ def chunk_text(text: str, max_chunk_chars: int = 4000, overlap_chars: int = 200)
         return [{"text": text, "token_count": len(text) // 4}]
 
     chunks = []
+    # Split on paragraphs first; for continuous text (e.g. transcripts) also split on sentences
     paragraphs = text.split("\n\n")
+    # If text has no paragraph breaks (e.g. YouTube transcript), split on sentence boundaries
+    if len(paragraphs) == 1 and len(text) > max_chunk_chars:
+        import re
+        # Split on sentence-ending punctuation followed by space
+        sentences = re.split(r'(?<=[.!?])\s+', text)
+        paragraphs = sentences
     current_chunk = ""
 
     for para in paragraphs:
+        # If a single segment is larger than max_chunk_chars, force-split it
+        if len(para) > max_chunk_chars:
+            # Flush current chunk first
+            if current_chunk.strip():
+                chunks.append({"text": current_chunk.strip(), "token_count": len(current_chunk) // 4})
+                current_chunk = ""
+            # Hard split the oversized segment
+            for i in range(0, len(para), max_chunk_chars - overlap_chars):
+                segment = para[i:i + max_chunk_chars]
+                chunks.append({"text": segment.strip(), "token_count": len(segment) // 4})
+            continue
         if len(current_chunk) + len(para) + 2 > max_chunk_chars and current_chunk:
             chunks.append({"text": current_chunk.strip(), "token_count": len(current_chunk) // 4})
             # Overlap: take last overlap_chars of current chunk
             overlap = current_chunk[-overlap_chars:] if len(current_chunk) > overlap_chars else ""
-            current_chunk = overlap + "\n\n" + para
+            current_chunk = overlap + " " + para
         else:
-            current_chunk = current_chunk + "\n\n" + para if current_chunk else para
+            current_chunk = current_chunk + " " + para if current_chunk else para
 
     if current_chunk.strip():
         chunks.append({"text": current_chunk.strip(), "token_count": len(current_chunk) // 4})
