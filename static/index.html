@@ -3,30 +3,32 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Knowledge Base</title>
+<title>Knowledge Base — CofounderGPT</title>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --bg: #0d1117;
-  --card: #161b22;
-  --card-hover: #1c2129;
-  --border: #30363d;
-  --text: #c9d1d9;
-  --text-muted: #8b949e;
-  --text-bright: #f0f6fc;
-  --accent: #58a6ff;
-  --accent-hover: #79c0ff;
-  --blue: #388bfd;
-  --red: #f85149;
-  --sky: #56d4dd;
-  --amber: #d29922;
-  --green: #3fb950;
-  --orange: #db6d28;
-  --radius: 8px;
-  --mono: 'SF Mono', 'Cascadia Code', 'Fira Code', monospace;
-  --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+  --bg: #0a0a0a;
+  --card: #111111;
+  --card-hover: #181818;
+  --border: #222222;
+  --border-hover: #333333;
+  --text: #b0b0b0;
+  --text-muted: #666666;
+  --text-bright: #e8e8e8;
+  --accent: #39FF14;
+  --accent-dim: rgba(57,255,20,0.12);
+  --accent-border: rgba(57,255,20,0.3);
+  --accent-hover: #4dff30;
+  --red: #ff4444;
+  --amber: #ffaa00;
+  --green: #39FF14;
+  --sky: #00d4ff;
+  --blue: #5588ff;
+  --radius: 6px;
+  --mono: 'SF Mono', 'Cascadia Code', 'Fira Code', 'JetBrains Mono', monospace;
+  --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Helvetica, Arial, sans-serif;
 }
 
 body {
@@ -35,35 +37,57 @@ body {
   color: var(--text);
   line-height: 1.6;
   min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
 }
 
 /* ===== TOP BAR ===== */
 .topbar {
   background: var(--card);
   border-bottom: 1px solid var(--border);
-  padding: 12px 20px;
+  padding: 14px 24px;
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 20px;
   flex-wrap: wrap;
   position: sticky;
   top: 0;
   z-index: 100;
 }
 .topbar-brand {
-  font-size: 18px;
-  font-weight: 700;
+  font-size: 15px;
+  font-weight: 600;
   color: var(--text-bright);
   white-space: nowrap;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+  font-family: var(--mono);
+  letter-spacing: -0.02em;
 }
-.topbar-brand svg { width: 22px; height: 22px; }
+.topbar-brand .brand-icon {
+  width: 28px;
+  height: 28px;
+  background: var(--accent);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: #000;
+  font-weight: 800;
+  font-family: var(--mono);
+}
+.topbar-brand .brand-slash {
+  color: var(--text-muted);
+  font-weight: 400;
+}
+.topbar-brand .brand-sub {
+  color: var(--accent);
+}
 .stats-strip {
   display: flex;
-  gap: 16px;
-  font-size: 13px;
+  gap: 20px;
+  font-size: 12px;
   color: var(--text-muted);
   font-family: var(--mono);
   flex-shrink: 0;
@@ -80,122 +104,137 @@ body {
   background: var(--bg);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 7px 12px;
+  padding: 8px 14px;
   color: var(--text);
-  font-size: 14px;
-  width: 260px;
+  font-size: 13px;
+  width: 240px;
   outline: none;
   transition: border-color 0.2s;
+  font-family: var(--sans);
 }
-.search-area input:focus { border-color: var(--accent); }
+.search-area input:focus { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent-border); }
 .search-area input::placeholder { color: var(--text-muted); }
 .btn {
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 7px 14px;
+  padding: 8px 16px;
   color: var(--text);
   font-size: 13px;
   cursor: pointer;
   transition: all 0.15s;
   white-space: nowrap;
-  font-family: var(--sans);
+  font-family: var(--mono);
+  font-weight: 500;
 }
-.btn:hover { background: var(--card-hover); border-color: var(--text-muted); }
+.btn:hover { background: var(--card-hover); border-color: var(--border-hover); }
 .btn-accent {
-  background: rgba(56,139,253,0.15);
-  border-color: rgba(56,139,253,0.4);
+  background: var(--accent-dim);
+  border-color: var(--accent-border);
   color: var(--accent);
 }
-.btn-accent:hover { background: rgba(56,139,253,0.25); }
+.btn-accent:hover { background: rgba(57,255,20,0.2); border-color: var(--accent); }
 
 /* ===== NAV TABS ===== */
 .nav-tabs {
   display: flex;
   gap: 0;
-  padding: 0 20px;
+  padding: 0 24px;
   background: var(--card);
   border-bottom: 1px solid var(--border);
 }
 .nav-tab {
-  padding: 10px 20px;
-  font-size: 14px;
+  padding: 12px 24px;
+  font-size: 13px;
   font-weight: 500;
   color: var(--text-muted);
   cursor: pointer;
   border-bottom: 2px solid transparent;
   transition: all 0.15s;
   user-select: none;
+  font-family: var(--mono);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
 }
 .nav-tab:hover { color: var(--text); }
-.nav-tab.active { color: var(--text-bright); border-bottom-color: var(--accent); }
+.nav-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
 
 /* ===== CONTENT ===== */
-.content { padding: 20px; max-width: 1200px; margin: 0 auto; }
+.content { padding: 24px; max-width: 1100px; margin: 0 auto; }
+
+/* Explainer */
+.view-explainer {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 20px;
+  padding: 0 2px;
+  line-height: 1.5;
+}
 
 /* Filter pills */
 .filter-pills {
   display: flex;
   gap: 8px;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
   flex-wrap: wrap;
 }
 .pill {
   padding: 5px 14px;
   border-radius: 20px;
-  font-size: 13px;
+  font-size: 12px;
   cursor: pointer;
   border: 1px solid var(--border);
   background: transparent;
   color: var(--text-muted);
   transition: all 0.15s;
-  font-family: var(--sans);
+  font-family: var(--mono);
 }
-.pill:hover { border-color: var(--text-muted); color: var(--text); }
-.pill.active { background: rgba(56,139,253,0.15); border-color: rgba(56,139,253,0.4); color: var(--accent); }
+.pill:hover { border-color: var(--border-hover); color: var(--text); }
+.pill.active { background: var(--accent-dim); border-color: var(--accent-border); color: var(--accent); }
 
 /* ===== TOPIC GRID ===== */
 .topic-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 12px;
 }
 .topic-card {
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 16px;
+  padding: 18px 20px;
   cursor: pointer;
   transition: all 0.2s;
 }
-.topic-card:hover { background: var(--card-hover); border-color: var(--text-muted); transform: translateY(-1px); }
+.topic-card:hover { background: var(--card-hover); border-color: var(--accent-border); }
 .topic-card h3 {
   font-size: 15px;
   font-weight: 600;
   color: var(--text-bright);
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 .topic-meta {
   display: flex;
   gap: 12px;
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text-muted);
   font-family: var(--mono);
 }
 .badge {
   display: inline-block;
   padding: 2px 8px;
-  border-radius: 12px;
-  font-size: 11px;
+  border-radius: 4px;
+  font-size: 10px;
   font-weight: 600;
   font-family: var(--mono);
   text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
-.badge-stale { background: rgba(210,153,34,0.15); color: var(--amber); }
-.badge-article { background: rgba(56,139,253,0.15); color: var(--blue); }
-.badge-youtube { background: rgba(248,81,73,0.15); color: var(--red); }
-.badge-tweet { background: rgba(86,212,221,0.15); color: var(--sky); }
-.badge-quote { background: rgba(210,153,34,0.15); color: var(--amber); }
+.badge-stale { background: rgba(255,170,0,0.12); color: var(--amber); }
+.badge-article { background: rgba(85,136,255,0.12); color: var(--blue); }
+.badge-youtube { background: rgba(255,68,68,0.12); color: var(--red); }
+.badge-tweet { background: rgba(0,212,255,0.12); color: var(--sky); }
+.badge-quote { background: rgba(255,170,0,0.12); color: var(--amber); }
 
 /* ===== SOURCE LIST ===== */
 .source-list { display: flex; flex-direction: column; gap: 4px; }
@@ -203,14 +242,14 @@ body {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px 16px;
+  padding: 14px 18px;
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   cursor: pointer;
   transition: all 0.15s;
 }
-.source-row:hover { background: var(--card-hover); border-color: var(--text-muted); }
+.source-row:hover { background: var(--card-hover); border-color: var(--accent-border); }
 .source-title {
   flex: 1;
   font-size: 14px;
@@ -220,7 +259,7 @@ body {
   white-space: nowrap;
 }
 .source-date {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text-muted);
   font-family: var(--mono);
   white-space: nowrap;
@@ -234,7 +273,7 @@ body {
 .enrichment-dot.pending { background: var(--amber); }
 .enrichment-dot.failed { background: var(--red); }
 .enrichment-dot.enriching { background: var(--accent); animation: pulse 1.5s infinite; }
-@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
 
 /* ===== DETAIL PANEL ===== */
 .detail-panel {
@@ -304,10 +343,11 @@ body {
 .wiki-content li { margin-bottom: 4px; }
 .wiki-content code {
   font-family: var(--mono);
-  background: rgba(110,118,129,0.15);
+  background: rgba(57,255,20,0.08);
   padding: 2px 6px;
-  border-radius: 4px;
+  border-radius: 3px;
   font-size: 13px;
+  color: var(--accent);
 }
 .wiki-content pre {
   background: var(--card);
@@ -317,9 +357,9 @@ body {
   overflow-x: auto;
   margin-bottom: 12px;
 }
-.wiki-content pre code { background: none; padding: 0; }
+.wiki-content pre code { background: none; padding: 0; color: var(--text); }
 .wiki-content blockquote {
-  border-left: 3px solid var(--accent);
+  border-left: 2px solid var(--accent);
   padding-left: 16px;
   color: var(--text-muted);
   margin-bottom: 12px;
@@ -328,43 +368,44 @@ body {
 .wiki-content a:hover { text-decoration: underline; }
 
 /* Source detail sections */
-.detail-section { margin-bottom: 20px; }
+.detail-section { margin-bottom: 24px; }
 .detail-section-title {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.08em;
   color: var(--text-muted);
-  margin-bottom: 8px;
+  margin-bottom: 10px;
+  font-family: var(--mono);
 }
 .detail-section p { font-size: 14px; line-height: 1.6; }
 .insight-list { list-style: none; padding: 0; }
 .insight-list li {
-  padding: 6px 0;
+  padding: 8px 0;
   font-size: 14px;
   border-bottom: 1px solid var(--border);
 }
 .insight-list li:last-child { border-bottom: none; }
 .entity-tags { display: flex; gap: 6px; flex-wrap: wrap; }
 .entity-tag {
-  padding: 3px 10px;
-  background: rgba(110,118,129,0.1);
+  padding: 4px 10px;
+  background: rgba(57,255,20,0.06);
   border: 1px solid var(--border);
-  border-radius: 16px;
+  border-radius: 4px;
   font-size: 12px;
   font-family: var(--mono);
   color: var(--text-muted);
 }
 .linked-sources { display: flex; flex-direction: column; gap: 6px; }
 .linked-source {
-  padding: 10px 14px;
+  padding: 12px 16px;
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   font-size: 13px;
 }
 .linked-source .ls-title { color: var(--text); font-weight: 500; }
-.linked-source .ls-meta { color: var(--text-muted); font-size: 12px; margin-top: 2px; }
+.linked-source .ls-meta { color: var(--text-muted); font-size: 12px; margin-top: 4px; }
 
 /* Pipeline status */
 .pipeline { display: flex; flex-direction: column; gap: 6px; }
@@ -372,7 +413,7 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 13px;
+  font-size: 12px;
   font-family: var(--mono);
 }
 .pipeline-stage .stage-name { width: 100px; color: var(--text-muted); }
@@ -385,7 +426,7 @@ body {
 /* ===== AI ANSWER MODAL ===== */
 .modal-overlay {
   position: fixed; inset: 0;
-  background: rgba(0,0,0,0.6);
+  background: rgba(0,0,0,0.7);
   z-index: 300;
   display: flex; align-items: center; justify-content: center;
   padding: 20px;
@@ -397,16 +438,19 @@ body {
 .modal {
   background: var(--card);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: 10px;
   width: min(600px, 100%);
   max-height: 80vh;
   overflow-y: auto;
-  padding: 24px;
+  padding: 28px;
 }
 .modal h3 {
-  font-size: 16px;
-  color: var(--text-bright);
-  margin-bottom: 16px;
+  font-size: 14px;
+  font-family: var(--mono);
+  color: var(--accent);
+  margin-bottom: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -418,22 +462,90 @@ body {
   border-top: 1px solid var(--border);
 }
 .modal .answer-sources h4 {
-  font-size: 12px;
+  font-size: 11px;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
   color: var(--text-muted);
   margin-bottom: 8px;
+  font-family: var(--mono);
 }
 
 /* ===== EMPTY STATE ===== */
 .empty-state {
   text-align: center;
-  padding: 60px 20px;
+  padding: 80px 24px 60px;
   color: var(--text-muted);
+  max-width: 520px;
+  margin: 0 auto;
 }
-.empty-state svg { width: 48px; height: 48px; margin-bottom: 16px; opacity: 0.5; }
-.empty-state h3 { font-size: 18px; margin-bottom: 8px; color: var(--text); }
-.empty-state p { font-size: 14px; }
+.empty-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  background: var(--accent-dim);
+  border: 1px solid var(--accent-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 24px;
+  font-size: 24px;
+}
+.empty-state h3 {
+  font-size: 18px;
+  margin-bottom: 12px;
+  color: var(--text-bright);
+  font-weight: 600;
+}
+.empty-state p {
+  font-size: 14px;
+  line-height: 1.7;
+  margin-bottom: 8px;
+}
+.empty-state .empty-cta {
+  margin-top: 24px;
+  padding: 14px 20px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  display: inline-block;
+}
+.empty-state .empty-cta code {
+  font-family: var(--mono);
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 500;
+}
+.empty-state .empty-cta .cta-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-family: var(--mono);
+  display: block;
+  margin-bottom: 6px;
+}
+.empty-state .empty-steps {
+  text-align: left;
+  margin: 20px auto 0;
+  max-width: 380px;
+}
+.empty-state .empty-steps li {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+  padding-left: 4px;
+  list-style: none;
+  display: flex;
+  gap: 10px;
+}
+.empty-state .empty-steps .step-num {
+  color: var(--accent);
+  font-family: var(--mono);
+  font-weight: 600;
+  font-size: 12px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
 
 /* ===== SPINNER ===== */
 .spinner {
@@ -444,8 +556,8 @@ body {
 }
 .spinner::after {
   content: '';
-  width: 28px; height: 28px;
-  border: 3px solid var(--border);
+  width: 24px; height: 24px;
+  border: 2px solid var(--border);
   border-top-color: var(--accent);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
@@ -454,13 +566,14 @@ body {
 
 /* ===== RESPONSIVE ===== */
 @media (max-width: 640px) {
-  .topbar { padding: 10px 14px; gap: 10px; }
+  .topbar { padding: 12px 16px; gap: 12px; }
   .stats-strip { display: none; }
-  .search-area input { width: 160px; }
-  .content { padding: 14px; }
+  .search-area input { width: 140px; }
+  .content { padding: 16px; }
   .topic-grid { grid-template-columns: 1fr; }
   .detail-panel { width: 100vw; }
-  .nav-tab { padding: 10px 14px; font-size: 13px; }
+  .nav-tab { padding: 12px 16px; font-size: 12px; }
+  .empty-state { padding: 60px 16px 40px; }
 }
 </style>
 </head>
@@ -469,17 +582,17 @@ body {
 <!-- Top Bar -->
 <div class="topbar">
   <div class="topbar-brand">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-    Knowledge Base
+    <div class="brand-icon">C</div>
+    CofounderGPT <span class="brand-slash">/</span> <span class="brand-sub">kb</span>
   </div>
   <div class="stats-strip" id="statsStrip">
-    <span><span class="stat-val" id="statSources">—</span> sources</span>
-    <span><span class="stat-val" id="statTopics">—</span> topics</span>
-    <span><span class="stat-val" id="statChunks">—</span> chunks</span>
+    <span><span class="stat-val" id="statSources">0</span> sources</span>
+    <span><span class="stat-val" id="statTopics">0</span> topics</span>
+    <span><span class="stat-val" id="statChunks">0</span> chunks</span>
   </div>
   <div class="search-area">
-    <input type="text" id="searchInput" placeholder="Search…" />
-    <button class="btn btn-accent" id="askAiBtn" title="Ask AI">✦ Ask AI</button>
+    <input type="text" id="searchInput" placeholder="Search or ask a question…" />
+    <button class="btn btn-accent" id="askAiBtn">Ask AI</button>
   </div>
 </div>
 
@@ -507,7 +620,7 @@ body {
     <h3>✦ AI Answer</h3>
     <div class="answer-text wiki-content" id="aiAnswer"></div>
     <div class="answer-sources" id="aiSources"></div>
-    <div style="text-align:right;margin-top:16px">
+    <div style="text-align:right;margin-top:20px">
       <button class="btn" id="aiModalClose">Close</button>
     </div>
   </div>
@@ -571,26 +684,44 @@ function renderTopics() {
     ? allTopics.filter(t => t.title.toLowerCase().includes(searchQuery.toLowerCase()))
     : allTopics;
 
+  let html = '';
+
+  // Always show the explainer
+  html += '<div class="view-explainer">Topics are wiki-like pages auto-generated from your sources. As you ingest articles, videos, and notes, the system extracts key concepts and builds topic pages that connect related ideas.</div>';
+
   if (filtered.length === 0) {
-    container.innerHTML = `
+    html += `
       <div class="empty-state">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+        <div class="empty-icon">📚</div>
         <h3>${searchQuery ? 'No matching topics' : 'No topics yet'}</h3>
-        <p>${searchQuery ? 'Try a different search' : 'Ingest some sources via Telegram to get started'}</p>
+        <p>${searchQuery
+          ? 'Try a different search term.'
+          : 'Topics appear automatically as you add sources. The system extracts entities and concepts, then compiles them into wiki-style pages — connecting ideas across everything you save.'}</p>
+        ${!searchQuery ? `
+        <ol class="empty-steps">
+          <li><span class="step-num">01</span> Send a source (URL, text, quote) via Telegram</li>
+          <li><span class="step-num">02</span> The system ingests and enriches it — extracting entities, key insights, and embeddings</li>
+          <li><span class="step-num">03</span> Topics emerge and get compiled into wiki pages nightly (or on demand)</li>
+        </ol>
+        <div class="empty-cta">
+          <span class="cta-label">Add your first source</span>
+          <code>kb: &lt;url or text&gt;</code>
+        </div>` : ''}
       </div>`;
-    return;
+  } else {
+    html += '<div class="topic-grid">' + filtered.map(t => `
+      <div class="topic-card" data-slug="${t.slug}">
+        <h3>${escHtml(t.title)}</h3>
+        <div class="topic-meta">
+          <span>${t.source_count} source${t.source_count !== 1 ? 's' : ''}</span>
+          ${t.stale ? '<span class="badge badge-stale">stale</span>' : ''}
+          ${t.last_compiled_at ? '<span>' + formatDate(t.last_compiled_at) + '</span>' : ''}
+        </div>
+      </div>
+    `).join('') + '</div>';
   }
 
-  container.innerHTML = '<div class="topic-grid">' + filtered.map(t => `
-    <div class="topic-card" data-slug="${t.slug}">
-      <h3>${escHtml(t.title)}</h3>
-      <div class="topic-meta">
-        <span>${t.source_count} source${t.source_count !== 1 ? 's' : ''}</span>
-        ${t.stale ? '<span class="badge badge-stale">stale</span>' : ''}
-        ${t.last_compiled_at ? '<span>' + formatDate(t.last_compiled_at) + '</span>' : ''}
-      </div>
-    </div>
-  `).join('') + '</div>';
+  container.innerHTML = html;
 
   container.querySelectorAll('.topic-card').forEach(card => {
     card.addEventListener('click', () => openTopic(card.dataset.slug));
@@ -607,9 +738,9 @@ async function openTopic(slug) {
   try {
     const page = await apiFetch(`/wiki/${encodeURIComponent(slug)}`);
     document.getElementById('detailTitle').textContent = page.title;
-    
+
     let html = '<div class="wiki-content">' + marked.parse(page.content || '_No content compiled yet._') + '</div>';
-    
+
     if (page.sources && page.sources.length > 0) {
       html += `
         <div class="detail-section" style="margin-top:24px">
@@ -654,7 +785,11 @@ function renderSources() {
   }
 
   const types = ['article', 'youtube', 'tweet', 'quote'];
-  let html = '<div class="filter-pills">';
+  let html = '';
+
+  html += '<div class="view-explainer">Sources are everything you\'ve saved — articles, YouTube videos, tweets, and quotes. Each source is enriched with AI-generated summaries, key insights, and entity extraction.</div>';
+
+  html += '<div class="filter-pills">';
   html += `<button class="pill ${!sourceTypeFilter ? 'active' : ''}" data-type="">All</button>`;
   types.forEach(t => {
     html += `<button class="pill ${sourceTypeFilter === t ? 'active' : ''}" data-type="${t}">${capitalize(t)}</button>`;
@@ -664,9 +799,16 @@ function renderSources() {
   if (filtered.length === 0) {
     html += `
       <div class="empty-state">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+        <div class="empty-icon">📥</div>
         <h3>${searchQuery || sourceTypeFilter ? 'No matching sources' : 'No sources yet'}</h3>
-        <p>${searchQuery || sourceTypeFilter ? 'Try adjusting your filters' : 'Ingest sources via Telegram using the kb: prefix'}</p>
+        <p>${searchQuery || sourceTypeFilter
+          ? 'Try adjusting your search or filters.'
+          : 'This is where your ingested content will appear. Articles, YouTube videos, tweets, quotes — anything you send gets processed, enriched, and made searchable.'}</p>
+        ${!(searchQuery || sourceTypeFilter) ? `
+        <div class="empty-cta">
+          <span class="cta-label">Send via Telegram</span>
+          <code>kb: &lt;url or text&gt;</code>
+        </div>` : ''}
       </div>`;
   } else {
     html += '<div class="source-list">';
@@ -716,10 +858,10 @@ async function openSource(id) {
     let html = '';
 
     // Type + URL
-    html += `<div style="margin-bottom:16px">
+    html += `<div style="margin-bottom:20px">
       <span class="badge badge-${source.source_type || 'article'}">${source.source_type || '?'}</span>
       ${source.url ? ' <a href="' + escHtml(source.url) + '" target="_blank" style="color:var(--accent);font-size:13px;margin-left:8px">' + escHtml(source.url) + '</a>' : ''}
-      <span style="color:var(--text-muted);font-size:12px;margin-left:8px">${formatDate(source.ingested_at)}</span>
+      <span style="color:var(--text-muted);font-size:12px;margin-left:8px;font-family:var(--mono)">${formatDate(source.ingested_at)}</span>
     </div>`;
 
     // Summary
@@ -759,7 +901,7 @@ async function openSource(id) {
       if (topics.length) {
         html += `<div class="detail-section">
           <div class="detail-section-title">Topics</div>
-          <div class="entity-tags">${topics.map(t => `<span class="entity-tag" style="cursor:pointer;border-color:var(--accent);color:var(--accent)" onclick="closePanel();setTimeout(()=>{switchView('topics');document.getElementById('searchInput').value='${escHtml(t)}';searchQuery='${escHtml(t)}';renderTopics()},100)">${escHtml(t)}</span>`).join('')}</div>
+          <div class="entity-tags">${topics.map(t => `<span class="entity-tag" style="cursor:pointer;border-color:var(--accent-border);color:var(--accent)" onclick="closePanel();setTimeout(()=>{switchView('topics');document.getElementById('searchInput').value='${escHtml(t)}';searchQuery='${escHtml(t)}';renderTopics()},100)">${escHtml(t)}</span>`).join('')}</div>
         </div>`;
       }
     }
@@ -802,7 +944,7 @@ async function askAI(query) {
     answerEl.innerHTML = marked.parse(result.answer || 'No answer generated.');
     if (result.sources && result.sources.length) {
       sourcesEl.innerHTML = `<h4>Sources</h4>` + result.sources.map(s =>
-        `<div style="font-size:13px;margin-bottom:4px">• ${escHtml(s.title || 'Untitled')}${s.url ? ' — <a href="' + escHtml(s.url) + '" target="_blank" style="color:var(--accent)">' + escHtml(s.url) + '</a>' : ''}</div>`
+        `<div style="font-size:13px;margin-bottom:4px;color:var(--text-muted)">• ${escHtml(s.title || 'Untitled')}${s.url ? ' — <a href="' + escHtml(s.url) + '" target="_blank" style="color:var(--accent)">' + escHtml(s.url) + '</a>' : ''}</div>`
       ).join('');
     }
   } catch (e) {
