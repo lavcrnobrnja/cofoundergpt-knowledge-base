@@ -8,7 +8,7 @@ from fastapi.responses import JSONResponse as _JSONResponse
 
 from app.config import DB_PATH
 from app.database import init_db, get_db
-from app.models import HealthResponse, StatsResponse, IngestRequest, IngestResponse
+from app.models import HealthResponse, StatsResponse, IngestRequest, IngestResponse, QueryRequest, QueryResponse
 
 
 _start_time: float = 0.0
@@ -86,6 +86,14 @@ async def get_pipeline_status(source_id: str):
         }
         for j in jobs
     ]
+
+
+@app.post("/query", response_model=QueryResponse)
+async def query(request: QueryRequest):
+    """Ask a question and get a synthesized answer."""
+    from app.synthesis import synthesize_answer
+    result = await synthesize_answer(request.query)
+    return QueryResponse(**result)
 
 
 @app.get("/stats", response_model=StatsResponse)

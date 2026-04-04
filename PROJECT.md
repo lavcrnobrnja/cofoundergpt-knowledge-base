@@ -25,9 +25,14 @@ source .venv/bin/activate && pytest -v
 ```
 
 ## Current State
-Step 3 complete — 4-stage enrichment pipeline (metadata, summary, extraction, vectors) with Gemini Flash LLM and embedding + similarity gate for topics. Asynchronous trigger via FastAPI BackgroundTasks. 32 tests passing.
+Step 4 complete — Vector search + wiki search + query synthesis. POST /query endpoint accepts a question and returns a synthesized answer from Gemini Pro with cited sources, relevant wiki pages, and related topics. Search uses cosine similarity with 30-day half-life time boost and per-source deduplication. 41 tests passing.
 
-Previous: Step 2 — POST /ingest with article, YouTube, tweet, quote extractors. Dedup (same content → 200, different content → re-ingest).
+Previous: Step 3 — 4-stage enrichment pipeline (metadata, summary, extraction, vectors) with Gemini Flash LLM and embedding + similarity gate for topics.
+
+## Key Files (Search/Query)
+- `app/search.py` — vector_search (chunks) + wiki_search (pages), time-boosted ranking
+- `app/synthesis.py` — context assembly + Gemini Pro synthesis
+- `tests/test_search.py` — 9 tests covering search, dedup, time boost, synthesis, endpoint
 
 ## DO NOT MODIFY
 - Schema (without migration)
