@@ -33,8 +33,8 @@ def detect_source_type(url: str) -> str:
     return "article"
 
 
-async def ingest_source(request: IngestRequest) -> tuple[IngestResponse, int]:
-    """Main ingest dispatcher. Returns (response, status_code)."""
+async def ingest_source(request: IngestRequest) -> tuple[IngestResponse, int, list[str]]:
+    """Main ingest dispatcher. Returns (response, status_code, linked_urls)."""
     # Validate: must have url OR text
     if not request.url and not request.text:
         from fastapi import HTTPException
@@ -88,7 +88,7 @@ async def ingest_source(request: IngestRequest) -> tuple[IngestResponse, int]:
                 title=row[0],
                 source_type=source_type,
                 status=row[1],
-            ), 200
+            ), 200, []
         else:
             # Different content — delete old, re-ingest
             async with get_db() as db:
@@ -127,15 +127,12 @@ async def ingest_source(request: IngestRequest) -> tuple[IngestResponse, int]:
         )
         await db.commit()
 
-    response = IngestResponse(
+    return IngestResponse(
         id=source_id,
         title=extracted.get("title"),
         source_type=source_type,
         status="pending",
-    )
-    # Attach linked_urls for tweet auto-follow (consumed by main.py)
-    response._linked_urls = extracted.get("linked_urls", [])
-    return response, 201
+    ), 201, extracted.get("linked_urls", [])
 
 
 async def _extract(source_type: str, url: str, request: IngestRequest) -> dict:

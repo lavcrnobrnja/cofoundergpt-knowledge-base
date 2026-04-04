@@ -10,13 +10,16 @@ os.environ["KB_DB_PATH"] = ""  # Will be set per-test via fixture
 
 @pytest.fixture(autouse=True)
 async def setup_temp_db(tmp_path):
-    """Set up a temporary database for each test."""
+    """Set up a temporary database and wiki dir for each test."""
     db_path = str(tmp_path / "test.db")
+    wiki_dir = tmp_path / "wiki"
+    wiki_dir.mkdir()
     os.environ["KB_DB_PATH"] = db_path
 
-    # Re-import to pick up new DB path
+    # Re-import to pick up new paths
     from app import config
     config.DB_PATH = Path(db_path)
+    config.WIKI_DIR = wiki_dir
 
     from app.database import init_db
     await init_db()

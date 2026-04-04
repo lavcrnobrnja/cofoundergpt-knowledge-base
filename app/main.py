@@ -7,8 +7,6 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, BackgroundTasks
 from fastapi.responses import JSONResponse
 
-from fastapi.responses import JSONResponse as _JSONResponse
-
 from app.config import DB_PATH
 from app.database import init_db, get_db
 from app.models import HealthResponse, StatsResponse, IngestRequest, IngestResponse, QueryRequest, QueryResponse
@@ -59,7 +57,7 @@ async def health():
 async def ingest(request: IngestRequest, background_tasks: BackgroundTasks):
     """Ingest a new source (URL or text)."""
     from app.ingest import ingest_source
-    response, status_code = await ingest_source(request)
+    response, status_code, linked_urls = await ingest_source(request)
     
     if status_code == 201:
         # Trigger enrichment in background
@@ -67,11 +65,10 @@ async def ingest(request: IngestRequest, background_tasks: BackgroundTasks):
         background_tasks.add_task(run_enrichment, response.id)
 
         # Tweet auto-follow: ingest linked external URLs (depth 1)
-        linked_urls = getattr(response, '_linked_urls', [])
         if linked_urls:
             background_tasks.add_task(_auto_follow_urls, linked_urls, request.user_context)
 
-    return _JSONResponse(content=response.model_dump(), status_code=status_code)
+    return JSONResponse(content=response.model_dump(), status_code=status_code)
 
 
 async def _auto_follow_urls(urls: list[str], user_context: str | None = None):
@@ -87,7 +84,7 @@ async def _auto_follow_urls(urls: list[str], user_context: str | None = None):
             from app.ingest import ingest_source
             from app.models import IngestRequest
             linked_request = IngestRequest(url=url, user_context=user_context)
-            linked_response, linked_status = await ingest_source(linked_request)
+            linked_response, linked_status, _ = await ingest_source(linked_request)
             if linked_status == 201:
                 from app.enrichment.pipeline import run_enrichment
                 await run_enrichment(linked_response.id)

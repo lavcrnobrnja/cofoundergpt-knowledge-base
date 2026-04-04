@@ -1,4 +1,5 @@
 """Tweet extraction via xurl CLI."""
+import asyncio
 import json
 import re
 import subprocess
@@ -47,7 +48,8 @@ async def extract_tweet(url: str) -> dict:
     linked_urls = []
 
     try:
-        result = subprocess.run(
+        result = await asyncio.to_thread(
+            subprocess.run,
             ["/opt/homebrew/bin/xurl", "read", tweet_id],
             capture_output=True, text=True, timeout=15,
         )

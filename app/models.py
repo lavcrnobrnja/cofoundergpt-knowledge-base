@@ -42,60 +42,11 @@ class QueryResponse(BaseModel):
 
 # --- Sources ---
 
-class SourceResponse(BaseModel):
-    id: str
-    url: Optional[str] = None
-    source_type: str
-    title: Optional[str] = None
-    author: Optional[str] = None
-    published_at: Optional[str] = None
-    ingested_at: str
-    summary: Optional[str] = None
-    key_insights: Optional[str] = None
-    topics: Optional[str] = None
-    user_context: Optional[str] = None
-    attribution: Optional[str] = None
-    enrichment_status: str
-
-
-class SourceListResponse(BaseModel):
-    sources: list[SourceResponse]
-    total: int
-
-
 class SourcePatchRequest(BaseModel):
     user_context: Optional[str] = None
     attribution: Optional[str] = None
     summary: Optional[str] = None
     key_insights: Optional[str] = None
-
-
-# --- Pipeline ---
-
-class PipelineStageResponse(BaseModel):
-    stage: str
-    status: str
-    attempt: int
-    error: Optional[str] = None
-    created_at: str
-    completed_at: Optional[str] = None
-
-
-# --- Wiki ---
-
-class WikiPageResponse(BaseModel):
-    id: str
-    slug: str
-    title: str
-    content: Optional[str] = None
-    source_count: int
-    stale: bool
-    created_at: str
-    last_compiled_at: Optional[str] = None
-
-
-class WikiListResponse(BaseModel):
-    pages: list[WikiPageResponse]
 
 
 # --- System ---

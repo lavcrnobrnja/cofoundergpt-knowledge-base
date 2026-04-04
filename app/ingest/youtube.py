@@ -1,4 +1,5 @@
 """YouTube extraction — metadata via yt-dlp + transcript via youtube-transcript-api."""
+import asyncio
 import json
 import re
 import subprocess
@@ -37,7 +38,8 @@ async def extract_youtube(url: str) -> dict:
     # Get metadata via yt-dlp (no download)
     meta = {}
     try:
-        result = subprocess.run(
+        result = await asyncio.to_thread(
+            subprocess.run,
             ["yt-dlp", "--dump-json", "--no-download", url],
             capture_output=True, text=True, timeout=30,
         )
@@ -50,7 +52,9 @@ async def extract_youtube(url: str) -> dict:
     raw_content = ""
     try:
         from youtube_transcript_api import YouTubeTranscriptApi
-        transcript_list = YouTubeTranscriptApi.get_transcript(video_id)
+        transcript_list = await asyncio.to_thread(
+            YouTubeTranscriptApi.get_transcript, video_id
+        )
         raw_content = " ".join(entry["text"] for entry in transcript_list)
     except Exception:
         # Fallback: use description if no transcript

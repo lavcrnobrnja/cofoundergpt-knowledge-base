@@ -1,3 +1,0 @@
-# Stale Topic
-## Overview
-Compiled.
