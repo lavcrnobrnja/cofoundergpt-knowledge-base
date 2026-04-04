@@ -25,7 +25,9 @@ source .venv/bin/activate && pytest -v
 ```
 
 ## Current State
-Step 1 complete — scaffold, schema, /health, /stats endpoints. 4 tests passing.
+Step 2 complete — POST /ingest with article, YouTube, tweet, quote extractors. Dedup (same content → 200, different content → re-ingest). No enrichment yet (stays 'pending'). 19 tests passing.
+
+Previous: Step 1 — scaffold, schema, /health, /stats endpoints.
 
 ## DO NOT MODIFY
 - Schema (without migration)
