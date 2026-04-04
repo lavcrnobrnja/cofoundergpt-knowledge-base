@@ -10,9 +10,19 @@ from app.models import IngestRequest, IngestResponse
 
 def detect_source_type(url: str) -> str:
     """Detect source type from URL pattern."""
+    # Local file paths (PDF)
+    if url.startswith("/") or url.startswith("file://"):
+        clean = url.replace("file://", "")
+        if clean.lower().endswith(".pdf"):
+            return "pdf"
+
     parsed = urlparse(url)
     host = parsed.hostname or ""
     path = parsed.path or ""
+
+    # PDF URLs
+    if path.lower().endswith(".pdf"):
+        return "pdf"
 
     # YouTube
     if host in ("www.youtube.com", "youtube.com", "m.youtube.com"):
@@ -146,6 +156,10 @@ async def _extract(source_type: str, url: str, request: IngestRequest) -> dict:
     elif source_type == "tweet":
         from app.ingest.tweet import extract_tweet
         return await extract_tweet(url)
+    elif source_type == "pdf":
+        from app.ingest.pdf import extract_pdf
+        path = url.replace("file://", "") if url.startswith("file://") else url
+        return await extract_pdf(path)
     else:
         # article, substack — both use article extractor
         from app.ingest.article import extract_article
