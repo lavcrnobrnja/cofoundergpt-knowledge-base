@@ -1,7 +1,7 @@
 """Knowledge Base v2 — FastAPI application."""
 import time
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, BackgroundTasks
 from fastapi.responses import JSONResponse
 
 from fastapi.responses import JSONResponse as _JSONResponse
@@ -53,11 +53,39 @@ async def health():
 
 
 @app.post("/ingest", response_model=IngestResponse, status_code=201)
-async def ingest(request: IngestRequest):
+async def ingest(request: IngestRequest, background_tasks: BackgroundTasks):
     """Ingest a new source (URL or text)."""
     from app.ingest import ingest_source
     response, status_code = await ingest_source(request)
+    
+    if status_code == 201:
+        # Trigger enrichment in background
+        from app.enrichment.pipeline import run_enrichment
+        background_tasks.add_task(run_enrichment, response.id)
+        
     return _JSONResponse(content=response.model_dump(), status_code=status_code)
+
+
+@app.get("/sources/{source_id}/pipeline")
+async def get_pipeline_status(source_id: str):
+    """Get the enrichment pipeline status for a source."""
+    async with get_db() as db:
+        cursor = await db.execute(
+            "SELECT stage, status, attempt, error, created_at, completed_at FROM enrichment_jobs WHERE source_id = ? ORDER BY created_at",
+            (source_id,)
+        )
+        jobs = await cursor.fetchall()
+    
+    if not jobs:
+        return JSONResponse(status_code=404, content={"error": "Source not found", "detail": "No pipeline jobs for this source"})
+    
+    return [
+        {
+            "stage": j[0], "status": j[1], "attempt": j[2],
+            "error": j[3], "created_at": j[4], "completed_at": j[5]
+        }
+        for j in jobs
+    ]
 
 
 @app.get("/stats", response_model=StatsResponse)

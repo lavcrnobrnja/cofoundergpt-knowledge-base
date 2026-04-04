@@ -25,9 +25,9 @@ source .venv/bin/activate && pytest -v
 ```
 
 ## Current State
-Step 2 complete — POST /ingest with article, YouTube, tweet, quote extractors. Dedup (same content → 200, different content → re-ingest). No enrichment yet (stays 'pending'). 19 tests passing.
+Step 3 complete — 4-stage enrichment pipeline (metadata, summary, extraction, vectors) with Gemini Flash LLM and embedding + similarity gate for topics. Asynchronous trigger via FastAPI BackgroundTasks. 32 tests passing.
 
-Previous: Step 1 — scaffold, schema, /health, /stats endpoints.
+Previous: Step 2 — POST /ingest with article, YouTube, tweet, quote extractors. Dedup (same content → 200, different content → re-ingest).
 
 ## DO NOT MODIFY
 - Schema (without migration)
