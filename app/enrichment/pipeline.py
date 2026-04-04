@@ -176,7 +176,7 @@ async def _stage_extraction(source_id: str):
     """Extract entities + assign topics via Gemini Flash. Run similarity gate for new topics."""
     async with get_db() as db:
         cursor = await db.execute(
-            "SELECT title, summary, key_insights FROM sources WHERE id = ?",
+            "SELECT title, summary, key_insights, raw_content FROM sources WHERE id = ?",
             (source_id,),
         )
         source = await cursor.fetchone()
@@ -190,11 +190,14 @@ async def _stage_extraction(source_id: str):
         else "None yet"
     )
 
+    content_sample = sample_content(source[3], max_chars=6000) if source[3] else ""
+
     client = get_gemini_client()
     prompt = EXTRACTION_PROMPT.format(
         title=source[0],
         summary=source[1],
         key_insights=source[2],
+        content_sample=content_sample,
         existing_topics=topic_list,
     )
 
@@ -213,7 +216,7 @@ async def _stage_extraction(source_id: str):
 
     # Insert entities
     async with get_db() as db:
-        for entity in result.get("entities", [])[:8]:
+        for entity in result.get("entities", [])[:20]:
             entity_id = str(uuid.uuid4())
             try:
                 await db.execute(
@@ -305,6 +308,17 @@ async def _stage_extraction(source_id: str):
                         await db.execute(
                             "UPDATE wiki_pages SET stale = 1 WHERE id = ?", (page[0],)
                         )
+
+                # Update source_count on wiki page
+                count_cursor = await db.execute(
+                    "SELECT COUNT(*) FROM wiki_source_links WHERE wiki_page_id = ?",
+                    (page[0],),
+                )
+                new_count = (await count_cursor.fetchone())[0]
+                await db.execute(
+                    "UPDATE wiki_pages SET source_count = ? WHERE id = ?",
+                    (new_count, page[0]),
+                )
         await db.commit()
 
     # Update source topics

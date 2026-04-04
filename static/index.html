@@ -379,6 +379,10 @@ body {
   font-family: var(--mono);
 }
 .detail-section p { font-size: 14px; line-height: 1.6; }
+.insights-grid { display: flex; flex-direction: column; gap: 8px; }
+.insight-card { background: rgba(57,255,20,0.04); border: 1px solid rgba(57,255,20,0.1); border-radius: 8px; padding: 12px 14px; }
+.insight-label { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--accent); margin-bottom: 4px; font-weight: 600; }
+.insight-text { font-size: 13px; line-height: 1.5; color: var(--text-secondary); }
 .insight-list { list-style: none; padding: 0; }
 .insight-list li {
   padding: 8px 0;
@@ -857,12 +861,13 @@ async function openSource(id) {
 
     let html = '';
 
-    // Type + URL
+    // Type + URL + Author
     html += `<div style="margin-bottom:20px">
       <span class="badge badge-${source.source_type || 'article'}">${source.source_type || '?'}</span>
-      ${source.url ? ' <a href="' + escHtml(source.url) + '" target="_blank" style="color:var(--accent);font-size:13px;margin-left:8px">' + escHtml(source.url) + '</a>' : ''}
+      ${source.author ? '<span style="color:var(--text-secondary);font-size:13px;margin-left:8px">' + escHtml(source.author) + '</span>' : ''}
       <span style="color:var(--text-muted);font-size:12px;margin-left:8px;font-family:var(--mono)">${formatDate(source.ingested_at)}</span>
-    </div>`;
+    </div>
+    ${source.url ? '<div style="margin-bottom:16px"><a href="' + escHtml(source.url) + '" target="_blank" style="color:var(--accent);font-size:12px;word-break:break-all;font-family:var(--mono)">' + escHtml(source.url) + '</a></div>' : ''}`;
 
     // Summary
     if (source.summary) {
@@ -874,13 +879,25 @@ async function openSource(id) {
 
     // Key Insights
     if (source.key_insights) {
-      const insights = typeof source.key_insights === 'string'
-        ? source.key_insights.split('\n').filter(Boolean)
-        : (Array.isArray(source.key_insights) ? source.key_insights : []);
+      let insights = [];
+      if (typeof source.key_insights === 'string') {
+        try { insights = JSON.parse(source.key_insights); } catch(e) {
+          insights = source.key_insights.split('\n').filter(Boolean);
+        }
+      } else if (Array.isArray(source.key_insights)) {
+        insights = source.key_insights;
+      }
       if (insights.length) {
         html += `<div class="detail-section">
           <div class="detail-section-title">Key Insights</div>
-          <ul class="insight-list">${insights.map(i => `<li>${escHtml(i.replace(/^[-•]\s*/, ''))}</li>`).join('')}</ul>
+          <div class="insights-grid">${insights.map(i => {
+            const text = typeof i === 'string' ? i.replace(/^[-•]\s*/, '') : String(i);
+            const colonIdx = text.indexOf(':');
+            if (colonIdx > 0 && colonIdx < 60) {
+              return `<div class="insight-card"><div class="insight-label">${escHtml(text.substring(0, colonIdx))}</div><div class="insight-text">${escHtml(text.substring(colonIdx + 1).trim())}</div></div>`;
+            }
+            return `<div class="insight-card"><div class="insight-text">${escHtml(text)}</div></div>`;
+          }).join('')}</div>
         </div>`;
       }
     }
@@ -889,7 +906,12 @@ async function openSource(id) {
     if (source.entities && source.entities.length) {
       html += `<div class="detail-section">
         <div class="detail-section-title">Entities</div>
-        <div class="entity-tags">${source.entities.map(e => `<span class="entity-tag">${escHtml(e.name)} <span style="opacity:0.5">${escHtml(e.type)}</span></span>`).join('')}</div>
+        <div class="entity-tags">${source.entities.map(e => {
+          const isPerson = e.type === 'person';
+          const style = isPerson ? 'border-color:rgba(100,180,255,0.3);color:rgba(100,180,255,0.9)' : '';
+          const icon = isPerson ? '👤 ' : (e.type === 'company' ? '🏢 ' : '');
+          return `<span class="entity-tag" style="${style}">${icon}${escHtml(e.name)}</span>`;
+        }).join('')}</div>
       </div>`;
     }
 
@@ -1020,9 +1042,15 @@ function escHtml(str) {
 function formatDate(iso) {
   if (!iso) return '';
   try {
-    const d = new Date(iso);
+    // DB stores UTC without Z suffix — append if missing
+    let s = iso;
+    if (/^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}/.test(s) && !s.endsWith('Z') && !/[+-]\d{2}/.test(s)) {
+      s = s.replace(' ', 'T') + 'Z';
+    }
+    const d = new Date(s);
     const now = new Date();
     const diffMs = now - d;
+    if (diffMs < 0) return 'just now';
     const diffH = diffMs / 3600000;
     if (diffH < 1) return Math.round(diffMs / 60000) + 'm ago';
     if (diffH < 24) return Math.round(diffH) + 'h ago';

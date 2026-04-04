@@ -19,6 +19,9 @@ Title: {title}
 Summary: {summary}
 Key Insights: {key_insights}
 
+CONTENT SAMPLE:
+{content_sample}
+
 EXISTING TOPICS IN THE KNOWLEDGE BASE:
 {existing_topics}
 
@@ -32,7 +35,9 @@ Return JSON:
 }}
 
 RULES:
+- Extract ALL named people mentioned (interviewees, hosts, referenced figures). Do not omit anyone.
+- Extract companies that are specifically discussed (not just passing mentions).
+- Extract key concepts that are central to the content.
 - Prefer assigning to existing topics. Only propose new topics if nothing fits.
-- Max 4 topics per source. Max 8 entities.
-- Companies: only if specifically named and discussed, not passing mentions.
+- Max 4 topics per source. Max 20 entities.
 - Topic slugs: lowercase, hyphen-separated."""
