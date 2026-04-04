@@ -32,6 +32,14 @@ async def run_enrichment(source_id: str):
     """Run all 4 enrichment stages for a source. Each stage retries up to 3 times."""
     stages = ["metadata", "summary", "extraction", "vectors"]
 
+    # Set status to processing at the start
+    async with get_db() as db:
+        await db.execute(
+            "UPDATE sources SET enrichment_status = 'processing' WHERE id = ?",
+            (source_id,),
+        )
+        await db.commit()
+
     for stage in stages:
         job_id = str(uuid.uuid4())
         async with get_db() as db:
@@ -135,7 +143,9 @@ async def _stage_summary(source_id: str):
     client = get_gemini_client()
     prompt = SUMMARY_PROMPT.format(content=content)
 
-    response = client.models.generate_content(
+    import asyncio
+    response = await asyncio.to_thread(
+        client.models.generate_content,
         model=config.FLASH_MODEL,
         contents=prompt,
         config=types.GenerateContentConfig(
@@ -188,7 +198,9 @@ async def _stage_extraction(source_id: str):
         existing_topics=topic_list,
     )
 
-    response = client.models.generate_content(
+    import asyncio
+    response = await asyncio.to_thread(
+        client.models.generate_content,
         model=config.FLASH_MODEL,
         contents=prompt,
         config=types.GenerateContentConfig(

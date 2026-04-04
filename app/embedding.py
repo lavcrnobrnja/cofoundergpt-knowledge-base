@@ -11,8 +11,10 @@ def get_gemini_client():
 
 async def embed_text(text: str) -> list[float]:
     """Embed a single text. Returns list of 3072 floats."""
+    import asyncio
     client = get_gemini_client()
-    result = client.models.embed_content(
+    result = await asyncio.to_thread(
+        client.models.embed_content,
         model=config.EMBEDDING_MODEL,
         contents=text,
     )
@@ -23,8 +25,10 @@ async def embed_texts(texts: list[str]) -> list[list[float]]:
     """Batch embed multiple texts."""
     if not texts:
         return []
+    import asyncio
     client = get_gemini_client()
-    result = client.models.embed_content(
+    result = await asyncio.to_thread(
+        client.models.embed_content,
         model=config.EMBEDDING_MODEL,
         contents=texts,
     )

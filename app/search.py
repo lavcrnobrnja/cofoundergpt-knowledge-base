@@ -1,6 +1,6 @@
 """Vector search + wiki search with time-boosted ranking."""
 import math
-from datetime import datetime
+from datetime import datetime, timezone
 
 from app.database import get_db
 from app.embedding import embed_text, deserialize_embedding, cosine_similarity
@@ -35,7 +35,9 @@ async def vector_search(query: str, top_k: int = 5) -> list[dict]:
 
         # Time boost — 30-day half-life
         ingested_at = datetime.fromisoformat(row[6])
-        days_old = (datetime.utcnow() - ingested_at).days
+        if ingested_at.tzinfo is None:
+            ingested_at = ingested_at.replace(tzinfo=timezone.utc)
+        days_old = (datetime.now(timezone.utc) - ingested_at).days
         time_boost = math.exp(-0.023 * days_old)
 
         final_score = semantic_score * time_boost

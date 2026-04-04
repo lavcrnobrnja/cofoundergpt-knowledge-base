@@ -96,7 +96,9 @@ async def compile_topic(slug: str) -> dict:
 
     # 5. Call Gemini Pro
     client = get_gemini_client()
-    response = client.models.generate_content(
+    import asyncio
+    response = await asyncio.to_thread(
+        client.models.generate_content,
         model=config.PRO_MODEL,
         contents=prompt,
         config=types.GenerateContentConfig(temperature=0.3),

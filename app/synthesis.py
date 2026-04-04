@@ -66,7 +66,9 @@ async def synthesize_answer(query: str) -> dict:
         source_context=source_context,
     )
 
-    response = client.models.generate_content(
+    import asyncio
+    response = await asyncio.to_thread(
+        client.models.generate_content,
         model=config.PRO_MODEL,
         contents=prompt,
         config=types.GenerateContentConfig(temperature=0.3),

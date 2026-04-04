@@ -1,5 +1,8 @@
 """Knowledge Base v2 — FastAPI application."""
+import logging
 import time
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, BackgroundTasks
 from fastapi.responses import JSONResponse
@@ -224,6 +227,10 @@ async def update_source(source_id: str, request: Request):
         return JSONResponse(status_code=422, content={"error": "No valid fields", "detail": f"Allowed: {allowed}"})
 
     async with get_db() as db:
+        cursor = await db.execute("SELECT id FROM sources WHERE id = ?", (source_id,))
+        if not await cursor.fetchone():
+            return JSONResponse(status_code=404, content={"error": "Not found", "detail": "Source not found"})
+
         set_clause = ", ".join(f"{k} = ?" for k in updates)
         await db.execute(
             f"UPDATE sources SET {set_clause} WHERE id = ?",
@@ -283,7 +290,17 @@ async def re_enrich_all(background_tasks: BackgroundTasks):
         sources = await cursor.fetchall()
 
     for row in sources:
-        background_tasks.add_task(run_enrichment, row[0])
+        source_id = row[0]
+        async with get_db() as db:
+            await db.execute("DELETE FROM chunks WHERE source_id = ?", (source_id,))
+            await db.execute("DELETE FROM entities WHERE source_id = ?", (source_id,))
+            await db.execute("DELETE FROM enrichment_jobs WHERE source_id = ?", (source_id,))
+            await db.execute(
+                "UPDATE sources SET enrichment_status = 'pending', summary = NULL, key_insights = NULL, topics = NULL WHERE id = ?",
+                (source_id,)
+            )
+            await db.commit()
+        background_tasks.add_task(run_enrichment, source_id)
 
     return {"queued": len(sources)}
 

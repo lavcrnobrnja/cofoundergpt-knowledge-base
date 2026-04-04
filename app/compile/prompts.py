@@ -23,23 +23,3 @@ RULES:
 6. Keep it concise. Reference, not essay.
 7. If >15 sources span unrelated subtopics, append:
    SPLIT_SUGGESTED: ["Subtopic A", "Subtopic B"]"""
-
-WIKI_TEMPLATE = """# {title}
-_Last compiled: {compiled_at} | Sources: {source_count}_
-
-## Overview
-{{overview}}
-
-## Key Themes
-{{themes}}
-
-## Connections
-{{connections}}
-
-## Sources
-| Date | Title | Key Takeaway |
-|---|---|---|
-{{sources_table}}
-
-## Open Questions
-{{questions}}"""
