@@ -16,6 +16,13 @@ async def vector_search(query: str, top_k: int = 5) -> list[dict]:
     5. Deduplicate: max 1 chunk per source (best-scoring wins)
     6. Return top_k results
     """
+    # Early exit: no chunks in DB → skip embedding call entirely
+    async with get_db() as db:
+        cursor = await db.execute("SELECT COUNT(*) FROM chunks WHERE embedding IS NOT NULL")
+        count = (await cursor.fetchone())[0]
+    if count == 0:
+        return []
+
     query_embedding = await embed_text(query)
 
     async with get_db() as db:
@@ -71,6 +78,13 @@ async def wiki_search(query: str, top_k: int = 2) -> list[dict]:
 
     Returns top_k wiki pages with full content, ranked by relevance.
     """
+    # Early exit: no wiki pages with embeddings → skip embedding call
+    async with get_db() as db:
+        cursor = await db.execute("SELECT COUNT(*) FROM wiki_pages WHERE embedding IS NOT NULL AND content IS NOT NULL")
+        count = (await cursor.fetchone())[0]
+    if count == 0:
+        return []
+
     query_embedding = await embed_text(query)
 
     async with get_db() as db:
