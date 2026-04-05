@@ -54,7 +54,9 @@ async def extract_tweet(url: str) -> dict:
             capture_output=True, text=True, timeout=15,
         )
         if result.returncode == 0:
-            data = json.loads(result.stdout)
+            resp = json.loads(result.stdout)
+            data = resp.get("data", resp) # handle both wrapped and unwrapped just in case
+            
             text = data.get("text", "")
             author = data.get("author_id") or data.get("username") or data.get("author")
             created_at = data.get("created_at")
