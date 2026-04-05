@@ -161,6 +161,12 @@ async def _stage_summary(source_id: str):
             "summary": result.get("summary"),
             "key_insights": json.dumps(result.get("key_insights", [])),
         }
+        
+        # Capture guests
+        guests_raw = result.get("guests")
+        if guests_raw and isinstance(guests_raw, list) and len(guests_raw) > 0:
+            updates["guests"] = json.dumps(guests_raw)
+            
         if not has_author and result.get("author"):
             updates["author"] = result["author"]
 

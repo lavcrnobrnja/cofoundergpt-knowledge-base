@@ -9,7 +9,8 @@ Return JSON:
 {{
     "summary": "2-4 sentence plain text overview",
     "key_insights": ["3-5 actionable insight strings"],
-    "author": "author name if detectable, else null"
+    "author": "author name if detectable (e.g. host or writer), else null",
+    "guests": ["names of interviewees or guests if any"]
 }}"""
 
 EXTRACTION_PROMPT = """Extract entities and assign topics for this source.

@@ -235,6 +235,7 @@ body {
 .badge-youtube { background: rgba(255,68,68,0.12); color: var(--red); }
 .badge-tweet { background: rgba(0,212,255,0.12); color: var(--sky); }
 .badge-quote { background: rgba(255,170,0,0.12); color: var(--amber); }
+.badge-github { background: rgba(200,200,200,0.12); color: #d0d0d0; }
 
 /* ===== SOURCE LIST ===== */
 .source-list { display: flex; flex-direction: column; gap: 4px; }
@@ -602,8 +603,8 @@ body {
 
 <!-- Nav Tabs -->
 <div class="nav-tabs">
-  <div class="nav-tab active" data-view="topics">Topics</div>
-  <div class="nav-tab" data-view="sources">Sources</div>
+  <div class="nav-tab active" data-view="sources">Sources</div>
+  <div class="nav-tab" data-view="topics">Topics</div>
 </div>
 
 <!-- Main Content -->
@@ -632,7 +633,7 @@ body {
 
 <script>
 // ===== STATE =====
-let currentView = 'topics';
+let currentView = 'sources';
 let allTopics = [];
 let allSources = [];
 let searchQuery = '';
@@ -788,7 +789,7 @@ function renderSources() {
     filtered = filtered.filter(s => (s.title || '').toLowerCase().includes(searchQuery.toLowerCase()));
   }
 
-  const types = ['article', 'youtube', 'tweet', 'quote'];
+  const types = ['article', 'youtube', 'tweet', 'quote', 'github'];
   let html = '';
 
   html += '<div class="view-explainer">Sources are everything you\'ve saved — articles, YouTube videos, tweets, and quotes. Each source is enriched with AI-generated summaries, key insights, and entity extraction.</div>';
@@ -862,10 +863,25 @@ async function openSource(id) {
     let html = '';
 
     // Type + URL + Author
+    let guestsHtml = '';
+    if (source.guests) {
+      try {
+        const parsedGuests = JSON.parse(source.guests);
+        if (parsedGuests && parsedGuests.length > 0) {
+          guestsHtml = `<div style="margin-top: 8px; font-size: 13px; color: var(--text-bright);">
+            <span style="color:var(--text-muted)">Guest(s):</span> ${escHtml(parsedGuests.join(', '))}
+          </div>`;
+        }
+      } catch (e) {}
+    }
+
     html += `<div style="margin-bottom:20px">
-      <span class="badge badge-${source.source_type || 'article'}">${source.source_type || '?'}</span>
-      ${source.author ? '<span style="color:var(--text-secondary);font-size:13px;margin-left:8px">' + escHtml(source.author) + '</span>' : ''}
-      <span style="color:var(--text-muted);font-size:12px;margin-left:8px;font-family:var(--mono)">${formatDate(source.ingested_at)}</span>
+      <div style="display:flex; align-items:center; flex-wrap:wrap; gap:8px;">
+        <span class="badge badge-${source.source_type || 'article'}">${source.source_type || '?'}</span>
+        ${source.author ? '<span style="color:var(--text-secondary);font-size:13px;">' + escHtml(source.author) + '</span>' : ''}
+        <span style="color:var(--text-muted);font-size:12px;font-family:var(--mono)">${formatDate(source.ingested_at)}</span>
+      </div>
+      ${guestsHtml}
     </div>
     ${source.url ? '<div style="margin-bottom:16px"><a href="' + escHtml(source.url) + '" target="_blank" style="color:var(--accent);font-size:12px;word-break:break-all;font-family:var(--mono)">' + escHtml(source.url) + '</a></div>' : ''}`;
 
@@ -882,6 +898,16 @@ async function openSource(id) {
       html += `<div class="detail-section">
         <div class="detail-section-title">Summary</div>
         <p>${escHtml(source.summary)}</p>
+      </div>`;
+    }
+
+    // Transcript / Raw Content
+    if (source.raw_content) {
+      html += `<div class="detail-section">
+        <div class="detail-section-title">Raw Transcript / Content</div>
+        <div style="max-height: 300px; overflow-y: auto; background: var(--bg-dark); padding: 10px; border-radius: 4px; font-family: monospace; white-space: pre-wrap; font-size: 0.9em; border: 1px solid var(--border);">
+          ${escHtml(source.raw_content)}
+        </div>
       </div>`;
     }
 

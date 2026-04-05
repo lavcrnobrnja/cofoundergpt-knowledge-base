@@ -58,6 +58,17 @@ async def extract_tweet(url: str) -> dict:
             data = resp.get("data", resp) # handle both wrapped and unwrapped just in case
             
             text = data.get("text", "")
+            
+            # Check for X Article title
+            article_data = data.get("article", {})
+            if isinstance(article_data, dict) and article_data.get("title"):
+                article_title = article_data.get("title")
+                # If text is basically just the t.co link, replace it with the article title
+                if text.startswith("https://t.co/") and len(text.split()) == 1:
+                    text = article_title
+                else:
+                    text = f"{article_title}\n\n{text}"
+                    
             author = data.get("author_id") or data.get("username") or data.get("author")
             created_at = data.get("created_at")
 
