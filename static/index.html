@@ -869,6 +869,14 @@ async function openSource(id) {
     </div>
     ${source.url ? '<div style="margin-bottom:16px"><a href="' + escHtml(source.url) + '" target="_blank" style="color:var(--accent);font-size:12px;word-break:break-all;font-family:var(--mono)">' + escHtml(source.url) + '</a></div>' : ''}`;
 
+    // Your Notes
+    if (source.user_context) {
+      html += `<div class="detail-section" style="background:var(--accent-dim);border:1px solid var(--accent-border);border-radius:var(--radius);padding:12px 16px;margin-bottom:20px">
+        <div class="detail-section-title" style="color:var(--accent)">📝 Your Notes</div>
+        <p style="color:var(--text-bright);font-style:italic">${escHtml(source.user_context)}</p>
+      </div>`;
+    }
+
     // Summary
     if (source.summary) {
       html += `<div class="detail-section">
