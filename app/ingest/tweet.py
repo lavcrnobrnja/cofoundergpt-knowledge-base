@@ -112,7 +112,11 @@ async def extract_tweet(url: str) -> dict:
     if not text:
         text = f"Tweet {tweet_id} from {url}"
 
-    title = text[:80] + "..." if len(text) > 80 else text
+    # For X Articles, use the article title; for regular tweets, truncate text
+    if isinstance(article_data, dict) and article_data.get("title"):
+        title = article_data["title"]
+    else:
+        title = text[:80] + "..." if len(text) > 80 else text
 
     return {
         "title": title,
