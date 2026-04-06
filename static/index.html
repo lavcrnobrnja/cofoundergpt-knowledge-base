@@ -822,7 +822,7 @@ function renderSources() {
         <div class="source-row" data-id="${s.id}">
           <span class="badge badge-${s.source_type || 'article'}">${s.source_type || '?'}</span>
           <span class="source-title">${escHtml(s.title || s.url || 'Untitled')}</span>
-          ${s.author ? '<span style="color:var(--text-secondary);font-size:12px;white-space:nowrap">' + escHtml(s.author) + '</span>' : ''}
+          ${s.author ? '<span style="color:var(--text-secondary);font-size:12px;white-space:nowrap">' + (s.source_type === 'tweet' ? '@' : '') + escHtml(s.author) + '</span>' : ''}
           <span class="source-date">${formatDate(s.ingested_at)}</span>
           <span class="enrichment-dot ${s.enrichment_status || 'pending'}" title="${s.enrichment_status || 'pending'}"></span>
         </div>`;
@@ -879,7 +879,7 @@ async function openSource(id) {
     html += `<div style="margin-bottom:20px">
       <div style="display:flex; align-items:center; flex-wrap:wrap; gap:8px;">
         <span class="badge badge-${source.source_type || 'article'}">${source.source_type || '?'}</span>
-        ${source.author ? '<span style="color:var(--text-secondary);font-size:13px;">' + escHtml(source.author) + '</span>' : ''}
+        ${source.author ? '<span style="color:var(--text-secondary);font-size:13px;">' + (source.source_type === 'tweet' ? '@' : '') + escHtml(source.author) + '</span>' : ''}
         <span style="color:var(--text-muted);font-size:12px;font-family:var(--mono)">${formatDate(source.ingested_at)}</span>
       </div>
       ${guestsHtml}

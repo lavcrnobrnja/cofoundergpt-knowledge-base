@@ -48,6 +48,7 @@ async def extract_tweet(url: str) -> dict:
     author = None
     created_at = None
     linked_urls = []
+    article_title = None  # set if this is an X Article
 
     try:
         result = await asyncio.to_thread(
@@ -57,26 +58,17 @@ async def extract_tweet(url: str) -> dict:
         )
         if result.returncode == 0:
             resp = json.loads(result.stdout)
-            data = resp.get("data", resp) # handle both wrapped and unwrapped just in case
-            
+            data = resp.get("data", resp)
+
             text = data.get("text", "")
-            
-            # Check for X Article title
-            article_data = data.get("article", {})
-            if not article_data:
-                article_data = resp.get("article", {})
-                
+
+            # Check for X Article
+            article_data = data.get("article") or resp.get("article") or {}
             if isinstance(article_data, dict) and article_data.get("title"):
-                article_title = article_data.get("title")
-                # If text is basically just the t.co link, replace it with the article title
-                if text.startswith("https://t.co/") and len(text.split()) == 1:
-                    text = article_title
-                else:
-                    text = f"{article_title}\n\n{text}"
-                    
+                article_title = article_data["title"]
+
             # Resolve author: prefer username from includes.users, fall back to author_id
             author_id = data.get("author_id")
-            author = None
             includes_users = resp.get("includes", {}).get("users", [])
             if author_id and includes_users:
                 for u in includes_users:
@@ -97,14 +89,17 @@ async def extract_tweet(url: str) -> dict:
             if not linked_urls:
                 linked_urls = re.findall(r"https?://[^\s]+", text)
 
-            # Filter out Twitter/X links and t.co shorteners (keep external URLs only)
+            # Filter out Twitter/X links and t.co shorteners
             linked_urls = _filter_external_urls(linked_urls)
 
-            # If this is an X Article, try to fetch the full article content
-            if isinstance(article_data, dict) and article_data.get("title"):
+            # For X Articles, fetch the full body via Jina Reader (API doesn't include it)
+            if article_title:
                 article_content = await _fetch_x_article(url)
                 if article_content:
-                    text = f"{article_data['title']}\n\n{article_content}"
+                    text = f"{article_title}\n\n{article_content}"
+                else:
+                    # Jina failed — use article title + whatever tweet text we have
+                    text = f"{article_title}\n\n{text}" if text else article_title
     except Exception:
         pass
 
@@ -112,11 +107,8 @@ async def extract_tweet(url: str) -> dict:
     if not text:
         text = f"Tweet {tweet_id} from {url}"
 
-    # For X Articles, use the article title; for regular tweets, truncate text
-    if isinstance(article_data, dict) and article_data.get("title"):
-        title = article_data["title"]
-    else:
-        title = text[:80] + "..." if len(text) > 80 else text
+    # Title: use article title for X Articles, truncated text for regular tweets
+    title = article_title if article_title else (text[:80] + "..." if len(text) > 80 else text)
 
     return {
         "title": title,
