@@ -1,0 +1,299 @@
+{
+  "Manifestation": [
+    "neuroscience"
+  ],
+  "agency": [
+    "innovation",
+    "proactivity",
+    "artificial-intelligence",
+    "future-of-work",
+    "llm-theory",
+    "prompt-engineering",
+    "knowledge-management",
+    "personal-research",
+    "macro-trends",
+    "monetary-systems",
+    "decision-making",
+    "geopolitics",
+    "systems-thinking",
+    "algorithmic-bias",
+    "entrepreneurship",
+    "creative-process",
+    "manifestation",
+    "neuroscience",
+    "habit-building"
+  ],
+  "algorithmic-bias": [
+    "proactivity",
+    "artificial-intelligence",
+    "llm-theory",
+    "political-polarization",
+    "decision-making",
+    "geopolitics"
+  ],
+  "artificial-intelligence": [
+    "innovation",
+    "proactivity",
+    "strategic-foresight",
+    "agency",
+    "future-of-work",
+    "llm-theory",
+    "prompt-engineering",
+    "knowledge-management",
+    "personal-research",
+    "macro-trends",
+    "monetary-systems",
+    "political-polarization",
+    "decision-making",
+    "geopolitics",
+    "algorithmic-bias",
+    "entrepreneurship"
+  ],
+  "creative-process": [
+    "innovation",
+    "proactivity",
+    "strategic-foresight",
+    "future-of-work",
+    "prompt-engineering",
+    "entrepreneurship",
+    "habit-building"
+  ],
+  "decision-making": [
+    "innovation",
+    "proactivity",
+    "strategic-foresight",
+    "agency",
+    "artificial-intelligence",
+    "future-of-work",
+    "llm-theory",
+    "knowledge-management",
+    "geopolitics",
+    "systems-thinking",
+    "algorithmic-bias",
+    "entrepreneurship",
+    "manifestation",
+    "neuroscience",
+    "habit-building"
+  ],
+  "entrepreneurship": [
+    "innovation",
+    "proactivity",
+    "agency",
+    "future-of-work",
+    "decision-making",
+    "creative-process",
+    "habit-building"
+  ],
+  "future-of-work": [
+    "innovation",
+    "strategic-foresight",
+    "agency",
+    "artificial-intelligence",
+    "prompt-engineering",
+    "knowledge-management",
+    "macro-trends",
+    "monetary-systems",
+    "political-polarization",
+    "entrepreneurship"
+  ],
+  "gender-dynamics": [
+    "proactivity",
+    "political-polarization"
+  ],
+  "geopolitics": [
+    "strategic-foresight",
+    "agency",
+    "llm-theory",
+    "macro-trends",
+    "monetary-systems",
+    "political-polarization",
+    "decision-making",
+    "systems-thinking",
+    "algorithmic-bias"
+  ],
+  "habit-building": [
+    "innovation",
+    "proactivity",
+    "agency",
+    "decision-making",
+    "entrepreneurship",
+    "manifestation",
+    "neuroscience"
+  ],
+  "innovation": [
+    "strategic-foresight",
+    "agency",
+    "artificial-intelligence",
+    "future-of-work",
+    "prompt-engineering",
+    "personal-research",
+    "macro-trends",
+    "monetary-systems",
+    "geopolitics",
+    "systems-thinking",
+    "entrepreneurship",
+    "creative-process"
+  ],
+  "knowledge-management": [
+    "artificial-intelligence",
+    "future-of-work",
+    "llm-theory",
+    "prompt-engineering",
+    "personal-research",
+    "entrepreneurship",
+    "creative-process"
+  ],
+  "llm-theory": [
+    "artificial-intelligence",
+    "future-of-work",
+    "prompt-engineering",
+    "knowledge-management",
+    "personal-research",
+    "decision-making",
+    "systems-thinking",
+    "algorithmic-bias"
+  ],
+  "macro-trends": [
+    "innovation",
+    "strategic-foresight",
+    "agency",
+    "artificial-intelligence",
+    "future-of-work",
+    "monetary-systems",
+    "political-polarization",
+    "decision-making",
+    "geopolitics",
+    "systems-thinking",
+    "algorithmic-bias",
+    "entrepreneurship"
+  ],
+  "manifestation": [
+    "proactivity",
+    "agency",
+    "decision-making",
+    "neuroscience",
+    "habit-building"
+  ],
+  "monetary-systems": [
+    "innovation",
+    "strategic-foresight",
+    "agency",
+    "artificial-intelligence",
+    "future-of-work",
+    "macro-trends",
+    "political-polarization",
+    "geopolitics",
+    "systems-thinking",
+    "entrepreneurship"
+  ],
+  "music-industry": [
+    "creative-process"
+  ],
+  "neuroscience": [
+    "innovation",
+    "proactivity",
+    "decision-making",
+    "manifestation",
+    "habit-building"
+  ],
+  "pattern-recognition": [
+    "innovation",
+    "strategic-foresight",
+    "personal-research",
+    "systems-thinking",
+    "entrepreneurship",
+    "creative-process",
+    "manifestation"
+  ],
+  "personal-research": [
+    "artificial-intelligence",
+    "llm-theory",
+    "knowledge-management"
+  ],
+  "political-polarization": [
+    "proactivity",
+    "strategic-foresight",
+    "agency",
+    "artificial-intelligence",
+    "llm-theory",
+    "macro-trends",
+    "geopolitics",
+    "algorithmic-bias"
+  ],
+  "proactivity": [
+    "agency",
+    "artificial-intelligence",
+    "future-of-work",
+    "personal-research",
+    "decision-making",
+    "entrepreneurship",
+    "creative-process",
+    "manifestation",
+    "neuroscience",
+    "habit-building"
+  ],
+  "product-management": [
+    "innovation",
+    "artificial-intelligence",
+    "future-of-work",
+    "entrepreneurship"
+  ],
+  "prompt-engineering": [
+    "artificial-intelligence",
+    "future-of-work",
+    "llm-theory",
+    "knowledge-management",
+    "personal-research",
+    "systems-thinking",
+    "algorithmic-bias",
+    "creative-process"
+  ],
+  "skill issue": [
+    "prompt-engineering"
+  ],
+  "strategic-foresight": [
+    "innovation",
+    "proactivity",
+    "agency",
+    "artificial-intelligence",
+    "future-of-work",
+    "personal-research",
+    "macro-trends",
+    "monetary-systems",
+    "political-polarization",
+    "decision-making",
+    "geopolitics",
+    "systems-thinking",
+    "entrepreneurship"
+  ],
+  "systems-thinking": [
+    "innovation",
+    "proactivity",
+    "strategic-foresight",
+    "agency",
+    "artificial-intelligence",
+    "future-of-work",
+    "llm-theory",
+    "prompt-engineering",
+    "knowledge-management",
+    "personal-research",
+    "macro-trends",
+    "monetary-systems",
+    "decision-making",
+    "geopolitics",
+    "algorithmic-bias",
+    "entrepreneurship"
+  ],
+  "willpower": [
+    "innovation",
+    "proactivity",
+    "agency",
+    "decision-making",
+    "systems-thinking",
+    "entrepreneurship",
+    "creative-process",
+    "manifestation",
+    "neuroscience",
+    "habit-building"
+  ]
+}

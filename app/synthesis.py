@@ -40,7 +40,7 @@ def _load_backlinks() -> dict:
 
 
 async def synthesize_answer(query: str) -> dict:
-    """Run search, assemble context, call Gemini Pro, return structured response."""
+    """Run search, assemble context, call Claude Opus, return structured response."""
     # Search
     source_results = await vector_search(query, top_k=5)
     wiki_results = await wiki_search(query, top_k=2)

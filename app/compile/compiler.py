@@ -39,10 +39,12 @@ async def rebuild_backlinks() -> dict:
         if not content:
             continue
         # Find all [[wikilink]] references in this page
+        # Handles both [[slug]] and [[slug|display text]] formats
         linked_slugs = re.findall(r'\[\[([^\]]+)\]\]', content)
-        for target in linked_slugs:
-            target = target.strip()
-            if target == slug:
+        for raw_target in linked_slugs:
+            # Normalize piped wikilinks: [[slug|display text]] → slug
+            target = raw_target.split('|')[0].strip()
+            if not target or target == slug:
                 # Skip self-references
                 continue
             if target not in backlinks:

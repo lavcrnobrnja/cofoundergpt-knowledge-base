@@ -337,6 +337,36 @@ async def test_rebuild_backlinks_writes_json(setup_temp_db):
 
 
 @pytest.mark.asyncio
+async def test_rebuild_backlinks_piped_wikilinks(setup_temp_db):
+    """Piped wikilinks [[slug|display text]] are normalized to just the slug."""
+    await _insert_wiki_page(
+        "page-piped", "Page Piped", stale=0,
+        content="# Page Piped\nSee [[artificial-intelligence|AI agents]] and [[systems-thinking|systemic]] for more."
+    )
+    await _insert_wiki_page(
+        "artificial-intelligence", "AI", stale=0,
+        content="# AI\nNo links."
+    )
+    await _insert_wiki_page(
+        "systems-thinking", "Systems Thinking", stale=0,
+        content="# Systems Thinking\nNo links."
+    )
+
+    from app.compile.compiler import rebuild_backlinks
+    backlinks = await rebuild_backlinks()
+
+    # Should normalize to slug only — no "artificial-intelligence|AI agents" keys
+    assert "artificial-intelligence|AI agents" not in backlinks
+    assert "systems-thinking|systemic" not in backlinks
+
+    # The actual slugs should have backlinks
+    assert "artificial-intelligence" in backlinks
+    assert "page-piped" in backlinks["artificial-intelligence"]
+    assert "systems-thinking" in backlinks
+    assert "page-piped" in backlinks["systems-thinking"]
+
+
+@pytest.mark.asyncio
 async def test_compile_rebuilds_backlinks(setup_temp_db):
     """compile_topic() calls rebuild_backlinks() after compilation."""
     page_id = await _insert_wiki_page("backlink-test", "Backlink Test", stale=1)
