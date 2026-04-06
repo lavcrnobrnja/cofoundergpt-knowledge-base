@@ -215,3 +215,153 @@ async def test_compile_writes_disk_file(setup_temp_db, tmp_path):
     wiki_file = config.WIKI_DIR / "disk-topic.md"
     assert wiki_file.exists()
     assert "Disk Topic" in wiki_file.read_text()
+
+
+# --- Backlinks Tests ---
+
+@pytest.mark.asyncio
+async def test_rebuild_backlinks_basic(setup_temp_db):
+    """rebuild_backlinks() extracts [[wikilinks]] from page content."""
+    # Insert pages with cross-references
+    await _insert_wiki_page(
+        "page-a", "Page A", stale=0,
+        content="# Page A\nThis references [[page-b]] and [[page-c]]."
+    )
+    await _insert_wiki_page(
+        "page-b", "Page B", stale=0,
+        content="# Page B\nThis references [[page-a]]."
+    )
+    await _insert_wiki_page(
+        "page-c", "Page C", stale=0,
+        content="# Page C\nNo outgoing links here."
+    )
+
+    from app.compile.compiler import rebuild_backlinks
+    backlinks = await rebuild_backlinks()
+
+    # page-b is linked from page-a
+    assert "page-b" in backlinks
+    assert "page-a" in backlinks["page-b"]
+
+    # page-c is linked from page-a
+    assert "page-c" in backlinks
+    assert "page-a" in backlinks["page-c"]
+
+    # page-a is linked from page-b
+    assert "page-a" in backlinks
+    assert "page-b" in backlinks["page-a"]
+
+    # page-c has no outgoing links, so nothing links to it from page-c
+    assert "page-c" not in backlinks["page-b"]  # page-b doesn't link to page-c
+
+
+@pytest.mark.asyncio
+async def test_rebuild_backlinks_no_links(setup_temp_db):
+    """Pages with no [[wikilinks]] produce empty backlinks."""
+    await _insert_wiki_page(
+        "lonely-page", "Lonely Page", stale=0,
+        content="# Lonely Page\nNo references to anything."
+    )
+
+    from app.compile.compiler import rebuild_backlinks
+    backlinks = await rebuild_backlinks()
+
+    # lonely-page has no outbound links, so it should not appear as a referring page
+    for referring_pages in backlinks.values():
+        assert "lonely-page" not in referring_pages
+
+
+@pytest.mark.asyncio
+async def test_rebuild_backlinks_circular(setup_temp_db):
+    """Circular references are handled correctly — no duplicates."""
+    await _insert_wiki_page(
+        "alpha", "Alpha", stale=0,
+        content="# Alpha\nSee [[beta]] for more."
+    )
+    await _insert_wiki_page(
+        "beta", "Beta", stale=0,
+        content="# Beta\nRelated to [[alpha]]."
+    )
+
+    from app.compile.compiler import rebuild_backlinks
+    backlinks = await rebuild_backlinks()
+
+    # alpha is linked from beta
+    assert "alpha" in backlinks
+    assert "beta" in backlinks["alpha"]
+    assert backlinks["alpha"].count("beta") == 1  # no duplicates
+
+    # beta is linked from alpha
+    assert "beta" in backlinks
+    assert "alpha" in backlinks["beta"]
+    assert backlinks["beta"].count("alpha") == 1  # no duplicates
+
+
+@pytest.mark.asyncio
+async def test_rebuild_backlinks_self_reference_ignored(setup_temp_db):
+    """Self-references (page linking to itself) are ignored."""
+    await _insert_wiki_page(
+        "narcissus", "Narcissus", stale=0,
+        content="# Narcissus\nSee [[narcissus]] — this page references itself."
+    )
+
+    from app.compile.compiler import rebuild_backlinks
+    backlinks = await rebuild_backlinks()
+
+    # narcissus should not appear as its own backlink
+    if "narcissus" in backlinks:
+        assert "narcissus" not in backlinks["narcissus"]
+
+
+@pytest.mark.asyncio
+async def test_rebuild_backlinks_writes_json(setup_temp_db):
+    """rebuild_backlinks() writes _backlinks.json to wiki dir."""
+    await _insert_wiki_page(
+        "writer", "Writer", stale=0,
+        content="# Writer\nPoints to [[target-page]]."
+    )
+    await _insert_wiki_page(
+        "target-page", "Target", stale=0,
+        content="# Target\nNo outgoing links."
+    )
+
+    from app.compile.compiler import rebuild_backlinks
+    await rebuild_backlinks()
+
+    backlinks_file = config.WIKI_DIR / "_backlinks.json"
+    assert backlinks_file.exists()
+
+    loaded = json.loads(backlinks_file.read_text())
+    assert "target-page" in loaded
+    assert "writer" in loaded["target-page"]
+
+
+@pytest.mark.asyncio
+async def test_compile_rebuilds_backlinks(setup_temp_db):
+    """compile_topic() calls rebuild_backlinks() after compilation."""
+    page_id = await _insert_wiki_page("backlink-test", "Backlink Test", stale=1)
+    source_id = await _insert_source(title="BL Source")
+    await _link_source_to_page(page_id, source_id)
+
+    compiled_content = "# Backlink Test\nThis topic links to [[other-topic]]."
+
+    with patch("app.compile.compiler.get_anthropic_client") as mock_client_fn, \
+         patch("app.compile.compiler.embed_text", new_callable=AsyncMock) as mock_embed, \
+         patch("app.compile.compiler.regenerate_index", new_callable=AsyncMock):
+
+        mock_client = MagicMock()
+        mock_client.messages.create.return_value = _mock_anthropic_response(compiled_content)
+        mock_client_fn.return_value = mock_client
+        mock_embed.return_value = _mock_embed_result()
+
+        from app.compile.compiler import compile_topic
+        result = await compile_topic("backlink-test")
+
+    assert result["compiled"] is True
+
+    # _backlinks.json should now exist with the link from backlink-test → other-topic
+    backlinks_file = config.WIKI_DIR / "_backlinks.json"
+    assert backlinks_file.exists()
+    loaded = json.loads(backlinks_file.read_text())
+    assert "other-topic" in loaded
+    assert "backlink-test" in loaded["other-topic"]

@@ -248,3 +248,87 @@ async def test_query_endpoint_mocked(client):
     assert "sources" in data
     assert "wiki_pages" in data
     assert "related_topics" in data
+
+
+@pytest.mark.asyncio
+async def test_synthesize_includes_backlinks(setup_temp_db):
+    """When wiki pages have backlinks, synthesis context includes them."""
+    import json
+    from app import config
+
+    # Write a backlinks file indicating that 'related-topic' links to 'ai'
+    backlinks_data = {"ai": ["related-topic", "another-topic"]}
+    backlinks_path = config.WIKI_DIR / "_backlinks.json"
+    backlinks_path.write_text(json.dumps(backlinks_data))
+
+    mock_sources = [
+        {
+            "chunk_id": "c1", "source_id": "s1", "content": "AI is transforming everything",
+            "score": 0.95, "source_title": "AI Article", "source_url": "https://example.com/ai",
+        }
+    ]
+    mock_wiki = [
+        {"slug": "ai", "title": "Artificial Intelligence", "content": "AI overview", "score": 0.9}
+    ]
+
+    mock_block = MagicMock()
+    mock_block.text = "AI is indeed transforming everything. Related topics: [[machine-learning]]"
+    mock_response = MagicMock()
+    mock_response.content = [mock_block]
+    mock_client = MagicMock()
+    mock_client.messages.create.return_value = mock_response
+
+    captured_prompt = {}
+
+    def capture_create(**kwargs):
+        captured_prompt["prompt"] = kwargs["messages"][0]["content"]
+        return mock_response
+
+    mock_client.messages.create.side_effect = capture_create
+
+    with patch("app.synthesis.vector_search", new_callable=AsyncMock, return_value=mock_sources), \
+         patch("app.synthesis.wiki_search", new_callable=AsyncMock, return_value=mock_wiki), \
+         patch("app.synthesis.anthropic.Anthropic", return_value=mock_client):
+        from app.synthesis import synthesize_answer
+        result = await synthesize_answer("what is AI?")
+
+    # Verify the synthesized answer is returned
+    assert "transforming" in result["answer"]
+    assert result["wiki_pages"] == ["ai"]
+
+    # Verify backlinks appeared in the prompt sent to Claude
+    assert "related-topic" in captured_prompt["prompt"]
+    assert "another-topic" in captured_prompt["prompt"]
+
+
+# --- Backlinks Endpoint Test ---
+
+@pytest.mark.asyncio
+async def test_backlinks_endpoint_empty(client):
+    """GET /backlinks → 200 with empty dict when no backlinks file exists."""
+    resp = await client.get("/backlinks")
+    assert resp.status_code == 200
+    assert resp.json() == {}
+
+
+@pytest.mark.asyncio
+async def test_backlinks_endpoint_returns_json(client):
+    """GET /backlinks → returns the backlinks JSON when file exists."""
+    import json
+    from app import config
+
+    # Write a backlinks file
+    backlinks_data = {
+        "topic-a": ["topic-b", "topic-c"],
+        "topic-b": ["topic-a"],
+    }
+    backlinks_path = config.WIKI_DIR / "_backlinks.json"
+    backlinks_path.write_text(json.dumps(backlinks_data))
+
+    resp = await client.get("/backlinks")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert "topic-a" in data
+    assert "topic-b" in data["topic-a"]
+    assert "topic-c" in data["topic-a"]
+    assert "topic-a" in data["topic-b"]

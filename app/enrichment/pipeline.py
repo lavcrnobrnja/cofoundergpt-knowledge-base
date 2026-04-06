@@ -373,6 +373,7 @@ async def _stage_vectors(source_id: str):
 
 async def regenerate_index():
     """Regenerate wiki/_index.md from DB state."""
+    import json
     import os
 
     os.makedirs(config.WIKI_DIR, exist_ok=True)
@@ -387,12 +388,21 @@ async def regenerate_index():
         total_sources_cursor = await db.execute("SELECT COUNT(*) FROM sources")
         total_sources = (await total_sources_cursor.fetchone())[0]
 
+    # Load backlinks index for backlink counts
+    backlinks: dict = {}
+    backlinks_path = config.WIKI_DIR / "_backlinks.json"
+    if backlinks_path.exists():
+        try:
+            backlinks = json.loads(backlinks_path.read_text())
+        except (json.JSONDecodeError, Exception):
+            pass
+
     lines = [
         "# Knowledge Base Index",
         f"_Last updated: {datetime.now(timezone.utc).isoformat()}Z | Topics: {len(pages)} | Sources: {total_sources}_",
         "",
-        "| Topic | Sources | Last Compiled | Summary |",
-        "|---|---|---|---|",
+        "| Topic | Sources | Backlinks | Last Compiled | Summary |",
+        "|---|---|---|---|---|",
     ]
 
     for page in pages:
@@ -403,8 +413,9 @@ async def regenerate_index():
                 if line.strip() and not line.startswith("#") and not line.startswith("_"):
                     summary = line.strip()[:100]
                     break
+        backlink_count = len(backlinks.get(slug, []))
         lines.append(
-            f"| [[{slug}]] | {source_count} | {last_compiled or 'never'} | {summary} |"
+            f"| [[{slug}]] | {source_count} | {backlink_count} | {last_compiled or 'never'} | {summary} |"
         )
 
     index_path = config.WIKI_DIR / "_index.md"

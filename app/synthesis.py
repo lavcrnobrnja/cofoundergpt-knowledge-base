@@ -1,4 +1,5 @@
 """Query synthesis — search → context assembly → Claude Opus → answer."""
+import json
 import re
 
 import anthropic
@@ -27,17 +28,36 @@ RULES:
 6. End with "Related topics: [[x]], [[y]]" if connections exist."""
 
 
+def _load_backlinks() -> dict:
+    """Load the backlinks index from disk. Returns empty dict if not available."""
+    backlinks_path = config.WIKI_DIR / "_backlinks.json"
+    if backlinks_path.exists():
+        try:
+            return json.loads(backlinks_path.read_text())
+        except (json.JSONDecodeError, Exception):
+            pass
+    return {}
+
+
 async def synthesize_answer(query: str) -> dict:
     """Run search, assemble context, call Gemini Pro, return structured response."""
     # Search
     source_results = await vector_search(query, top_k=5)
     wiki_results = await wiki_search(query, top_k=2)
 
+    # Load backlinks index
+    backlinks = _load_backlinks()
+
     # Build context strings
     if wiki_results:
         wiki_context = ""
         for wp in wiki_results:
             wiki_context += f"\n### {wp['title']}\n{wp['content']}\n"
+            # Append backlinks for this page if any
+            slug = wp["slug"]
+            referring_pages = backlinks.get(slug, [])
+            if referring_pages:
+                wiki_context += f"\n_Pages linking to [[{slug}]]: {', '.join(f'[[{s}]]' for s in referring_pages)}_\n"
     else:
         wiki_context = "No wiki pages available yet."
 

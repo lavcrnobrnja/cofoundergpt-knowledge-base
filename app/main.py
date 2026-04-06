@@ -195,6 +195,20 @@ async def nightly_compile():
     return result
 
 
+@app.get("/backlinks")
+async def get_backlinks():
+    """Return the current backlinks index as JSON."""
+    from app.config import WIKI_DIR
+    import json
+    backlinks_path = WIKI_DIR / "_backlinks.json"
+    if not backlinks_path.exists():
+        return {}
+    try:
+        return json.loads(backlinks_path.read_text())
+    except (json.JSONDecodeError, Exception) as e:
+        return JSONResponse(status_code=500, content={"error": "Failed to read backlinks", "detail": str(e)})
+
+
 # --- Source CRUD Endpoints ---
 
 @app.get("/sources")

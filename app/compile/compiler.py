@@ -21,20 +21,60 @@ def get_anthropic_client():
     return anthropic.Anthropic(api_key=config.ANTHROPIC_API_KEY)
 
 
+async def rebuild_backlinks() -> dict:
+    """Scan all wiki page content for [[wikilinks]] and build a backlinks index.
+
+    Returns a dict mapping target slugs to lists of referring slugs:
+        { "target-slug": ["referring-slug-1", "referring-slug-2", ...] }
+
+    Writes the result to wiki/_backlinks.json.
+    """
+    async with get_db() as db:
+        cursor = await db.execute("SELECT slug, content FROM wiki_pages WHERE content IS NOT NULL")
+        pages = await cursor.fetchall()
+
+    backlinks: dict[str, list[str]] = {}
+
+    for slug, content in pages:
+        if not content:
+            continue
+        # Find all [[wikilink]] references in this page
+        linked_slugs = re.findall(r'\[\[([^\]]+)\]\]', content)
+        for target in linked_slugs:
+            target = target.strip()
+            if target == slug:
+                # Skip self-references
+                continue
+            if target not in backlinks:
+                backlinks[target] = []
+            if slug not in backlinks[target]:
+                backlinks[target].append(slug)
+
+    # Write to disk
+    os.makedirs(config.WIKI_DIR, exist_ok=True)
+    backlinks_path = config.WIKI_DIR / "_backlinks.json"
+    backlinks_path.write_text(json.dumps(backlinks, indent=2, sort_keys=True))
+
+    logger.info(f"Rebuilt backlinks index: {len(backlinks)} targets across {len(pages)} pages")
+    return backlinks
+
+
 async def compile_topic(slug: str) -> dict:
     """Compile a single wiki page from its linked sources.
 
     1. Get wiki page from DB
     2. Get all linked sources (via wiki_source_links)
     3. Get _index.md content (existing topics for cross-linking)
-    4. Build prompt with sources + existing page (if updating)
-    5. Call Gemini 3.1 Pro
-    6. Save content to wiki_pages.content (DB = source of truth)
-    7. Update source_count, last_compiled_at, stale = 0
-    8. Re-embed the wiki page content → update wiki_pages.embedding
-    9. Write wiki/{slug}.md to disk (projection)
-    10. Regenerate _index.md
-    11. Check for SPLIT_SUGGESTED in output → log if found
+    4. Load current backlinks for this topic (who links here)
+    5. Build prompt with sources + existing page + backlinks (if updating)
+    6. Call Claude Opus
+    7. Save content to wiki_pages.content (DB = source of truth)
+    8. Update source_count, last_compiled_at, stale = 0
+    9. Re-embed the wiki page content → update wiki_pages.embedding
+    10. Write wiki/{slug}.md to disk (projection)
+    11. Regenerate _index.md
+    12. Rebuild backlinks index
+    13. Check for SPLIT_SUGGESTED in output → log if found
 
     Returns: {"slug": str, "title": str, "source_count": int, "compiled": True}
     """
@@ -71,7 +111,24 @@ async def compile_topic(slug: str) -> dict:
     if index_path.exists():
         index_context = index_path.read_text()
 
-    # 4. Build prompt
+    # 4. Load current backlinks for this topic
+    backlinks_path = config.WIKI_DIR / "_backlinks.json"
+    backlinks_context = ""
+    if backlinks_path.exists():
+        try:
+            backlinks = json.loads(backlinks_path.read_text())
+            referring_pages = backlinks.get(slug, [])
+            if referring_pages:
+                backlinks_context = "Pages that currently link to this topic:\n"
+                backlinks_context += "\n".join(f"- [[{s}]]" for s in referring_pages)
+            else:
+                backlinks_context = "No other pages currently link to this topic."
+        except (json.JSONDecodeError, Exception):
+            backlinks_context = "Backlinks index not available."
+    else:
+        backlinks_context = "No backlinks index yet — this may be the first compilation."
+
+    # 5. Build prompt
     sources_context = ""
     for s in sources:
         sources_context += f"\n### {s[1] or 'Untitled'}\n"
@@ -91,9 +148,10 @@ async def compile_topic(slug: str) -> dict:
         topic_title=page_title,
         sources_context=sources_context or "No sources linked yet.",
         index_context=index_context or "No other topics yet.",
+        backlinks_context=backlinks_context,
     )
 
-    # 5. Call Claude Opus
+    # 6. Call Claude Opus
     client = get_anthropic_client()
     import asyncio
     response = await asyncio.to_thread(
@@ -105,7 +163,7 @@ async def compile_topic(slug: str) -> dict:
     )
     compiled_content = response.content[0].text
 
-    # 6 & 7. Save to DB
+    # 7 & 8. Save to DB
     now = datetime.now(timezone.utc).isoformat()
     async with get_db() as db:
         await db.execute(
@@ -114,7 +172,7 @@ async def compile_topic(slug: str) -> dict:
         )
         await db.commit()
 
-    # 8. Re-embed
+    # 9. Re-embed
     embedding = await embed_text(compiled_content[:8000])
     serialized = serialize_embedding(embedding)
     async with get_db() as db:
@@ -124,15 +182,18 @@ async def compile_topic(slug: str) -> dict:
         )
         await db.commit()
 
-    # 9. Write to disk
+    # 10. Write to disk
     os.makedirs(config.WIKI_DIR, exist_ok=True)
     wiki_file = config.WIKI_DIR / f"{slug}.md"
     wiki_file.write_text(compiled_content)
 
-    # 10. Regenerate index
+    # 11. Regenerate index
     await regenerate_index()
 
-    # 11. Check for SPLIT_SUGGESTED
+    # 12. Rebuild backlinks index
+    await rebuild_backlinks()
+
+    # 13. Check for SPLIT_SUGGESTED
     result = {
         "slug": slug,
         "title": page_title,
