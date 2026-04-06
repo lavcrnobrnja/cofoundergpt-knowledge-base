@@ -24,9 +24,9 @@ Python 3.13 + FastAPI + SQLite WAL + google-genai + PyMuPDF
 - `app/enrichment/prompts.py` — LLM prompts for enrichment
 - `app/embedding.py` — Gemini Embedding 2 (chunk, embed, cosine similarity)
 - `app/search.py` — Vector search + wiki search (empty-DB safe)
-- `app/synthesis.py` — Context assembly + Gemini Pro synthesis
-- `app/compile/compiler.py` — Wiki page compilation via Gemini Pro
-- `app/compile/prompts.py` — Compilation prompt template
+- `app/synthesis.py` — Context assembly + Claude Opus synthesis
+- `app/compile/compiler.py` — Wiki page compilation via Claude Opus + backlinks index
+- `app/compile/prompts.py` — Compilation prompt (writer-first, thematic sections)
 - `static/index.html` — Dashboard (dark theme, CofounderGPT branding)
 
 ## How to Run
@@ -71,7 +71,7 @@ article, youtube, tweet, quote, voice_memo, pdf
 - **Synthesis context:** Backlinks included per wiki page in synthesis prompt (suggests related reading).
 - **New endpoint:** GET /backlinks returns current backlinks JSON.
 - **_index.md:** Now includes a Backlinks count column.
-- **Tests:** 82/82 passing (9 new tests for backlinks).
+- **Tests:** 83/83 passing (10 new tests: backlinks extraction, piped wikilinks, self-refs, circular refs, JSON file write, compile integration, synthesis context, endpoint x2).
 
 ### Previous state (Apr 5, 2026)
 Service live. Dashboard at http://127.0.0.1:8555/ defaults to Sources tab. **38 sources** (20 tweets, 13 YouTube, 4 articles, 1 GitHub).
