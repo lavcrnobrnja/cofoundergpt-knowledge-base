@@ -60,7 +60,7 @@ class TestDetectSourceType:
 
     def test_detect_substack(self):
         from app.ingest import detect_source_type
-        assert detect_source_type("https://something.substack.com/p/my-post") == "substack"
+        assert detect_source_type("https://something.substack.com/p/my-post") == "article"
 
     def test_detect_article_default(self):
         from app.ingest import detect_source_type

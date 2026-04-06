@@ -35,9 +35,9 @@ def detect_source_type(url: str) -> str:
     if host in ("x.com", "www.x.com", "twitter.com", "www.twitter.com"):
         return "tweet"
 
-    # Substack
-    if host.endswith(".substack.com"):
-        return "substack"
+    # Substack — treated as article (same extractor)
+    # if host.endswith(".substack.com"):
+    #     return "substack"
 
     # Default
     return "article"
