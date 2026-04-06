@@ -39,7 +39,7 @@ source .venv/bin/activate && uvicorn app.main:app --host 127.0.0.1 --port 8555
 source .venv/bin/activate && pytest -v
 ```
 
-## API Endpoints (15)
+## API Endpoints (16)
 - POST /ingest — ingest URL, file path, or text (triggers background enrichment)
 - POST /query — ask a question, get synthesized answer
 - GET /sources — list sources (optional ?type= filter)
@@ -53,6 +53,7 @@ source .venv/bin/activate && pytest -v
 - GET /wiki/{slug} — wiki page detail + linked sources
 - POST /wiki/{slug}/compile — force recompile
 - POST /compile/nightly — compile all stale topics
+- GET /backlinks — return current _backlinks.json (which pages link to which)
 - GET /health — health check
 - GET /stats — database statistics
 
@@ -61,7 +62,18 @@ article, youtube, tweet, quote, voice_memo, pdf
 
 (substack URLs auto-detected as article)
 
-## Current State (Apr 5, 2026)
+## Current State (Apr 6, 2026)
+
+### Branch: cofoundergpt/compiler-upgrade-backlinks (Apr 6, 2026)
+- **Compiler prompt rewrite:** New COMPILE_PROMPT produces Wikipedia-quality thematic articles. Sections emerge from content (not fixed template). Tone: Economist meets Wikipedia. Scales length to source count. Organic [[wikilinks]] in prose. Max 3-4 quotes. Preserves existing page content on updates.
+- **Backlinks index:** `rebuild_backlinks()` in compiler.py scans all wiki pages for `[[slug]]` patterns, builds `{ target: [referring-slugs] }` map, writes to `wiki/_backlinks.json`. Called automatically after every `compile_topic()`.
+- **Compiler context:** Each compilation now includes which pages currently link to the topic (feeds better cross-references).
+- **Synthesis context:** Backlinks included per wiki page in synthesis prompt (suggests related reading).
+- **New endpoint:** GET /backlinks returns current backlinks JSON.
+- **_index.md:** Now includes a Backlinks count column.
+- **Tests:** 82/82 passing (9 new tests for backlinks).
+
+### Previous state (Apr 5, 2026)
 Service live. Dashboard at http://127.0.0.1:8555/ defaults to Sources tab. **38 sources** (20 tweets, 13 YouTube, 4 articles, 1 GitHub).
 
 - Gemini key configured and working. Enrichment pipeline fully functional.
