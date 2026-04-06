@@ -1,4 +1,5 @@
 """Knowledge Base v2 — FastAPI application."""
+import json
 import logging
 import time
 
@@ -240,6 +241,16 @@ async def get_source(source_id: str):
         entities = [{"type": e[0], "name": e[1]} for e in await cursor.fetchall()]
 
     source_dict["entities"] = entities
+
+    # Parse JSON string fields back to native types
+    for field in ("key_insights", "topics", "guests", "metadata"):
+        val = source_dict.get(field)
+        if isinstance(val, str):
+            try:
+                source_dict[field] = json.loads(val)
+            except (json.JSONDecodeError, TypeError):
+                pass
+
     return source_dict
 
 
