@@ -57,16 +57,23 @@ source .venv/bin/activate && pytest -v
 - GET /stats — database statistics
 
 ## Source Types
-article, youtube, tweet, substack, quote, voice_memo, pdf
+article, youtube, tweet, quote, voice_memo, pdf
+
+(substack URLs auto-detected as article)
 
 ## Current State (Apr 5, 2026)
-Service live. Dashboard at http://127.0.0.1:8555/ defaults to Sources tab.
+Service live. Dashboard at http://127.0.0.1:8555/ defaults to Sources tab. **38 sources** (20 tweets, 13 YouTube, 4 articles, 1 GitHub).
 
 - Gemini key configured and working. Enrichment pipeline fully functional.
-- Native Twitter ingest via `xurl` implemented, skipping scrapers. Handles long-form X Articles by extracting `article.title` from the raw API payload AND fetching full article body via Jina Reader (`r.jina.ai`) since X API doesn't return article content.
-- Author resolution for tweets uses `includes.users` from xurl response (not raw numeric `author_id`).
-- `guests` extraction restricted to interviews/podcasts/panels only (not articles/tweets/essays).
-- Dashboard shows author on source list cards AND in detail popup. Detail also shows: Title, Guest(s), Your Notes, Summary, Key Insights, Entities, Topics, Pipeline.
+- Native Twitter ingest via `xurl`. Three tweet types handled:
+  - **Regular tweets:** text from API
+  - **X Articles:** title from API + full body via Jina Reader (`r.jina.ai`)
+  - **Video tweets:** detected via X API media expansion, audio downloaded via yt-dlp, transcribed via Whisper. Metadata flags: `has_video`, `video_transcribed`. 50MB/120s/300s guards.
+  - **Threads:** manual workaround via ThreadReaderApp (no auto-thread detection yet)
+- Author resolution uses `includes.users` from xurl response (not raw numeric `author_id`).
+- `guests` extraction restricted to interviews/podcasts/panels only.
+- Dashboard shows author on source list cards + detail popup. @ prefix for tweet authors.
+- Substack URLs auto-merge into article type.
 - Nightly compile cron (5da29338) active, runs 3am ET on Flash Lite.
 
 ## Telegram Integration
