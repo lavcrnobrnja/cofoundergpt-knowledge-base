@@ -5,6 +5,8 @@ import re
 import subprocess
 from urllib.parse import urlparse
 
+import httpx
+
 # Domains that are Twitter/X itself — not external content
 _TWITTER_DOMAINS = {
     "t.co", "twitter.com", "www.twitter.com",
@@ -61,6 +63,9 @@ async def extract_tweet(url: str) -> dict:
             
             # Check for X Article title
             article_data = data.get("article", {})
+            if not article_data:
+                article_data = resp.get("article", {})
+                
             if isinstance(article_data, dict) and article_data.get("title"):
                 article_title = article_data.get("title")
                 # If text is basically just the t.co link, replace it with the article title
@@ -69,7 +74,17 @@ async def extract_tweet(url: str) -> dict:
                 else:
                     text = f"{article_title}\n\n{text}"
                     
-            author = data.get("author_id") or data.get("username") or data.get("author")
+            # Resolve author: prefer username from includes.users, fall back to author_id
+            author_id = data.get("author_id")
+            author = None
+            includes_users = resp.get("includes", {}).get("users", [])
+            if author_id and includes_users:
+                for u in includes_users:
+                    if u.get("id") == author_id:
+                        author = u.get("username") or u.get("name")
+                        break
+            if not author:
+                author = data.get("username") or data.get("author") or author_id
             created_at = data.get("created_at")
 
             # Extract URLs from tweet entities or text
@@ -84,6 +99,12 @@ async def extract_tweet(url: str) -> dict:
 
             # Filter out Twitter/X links and t.co shorteners (keep external URLs only)
             linked_urls = _filter_external_urls(linked_urls)
+
+            # If this is an X Article, try to fetch the full article content
+            if isinstance(article_data, dict) and article_data.get("title"):
+                article_content = await _fetch_x_article(url)
+                if article_content:
+                    text = f"{article_data['title']}\n\n{article_content}"
     except Exception:
         pass
 
@@ -101,3 +122,30 @@ async def extract_tweet(url: str) -> dict:
         "metadata": {"tweet_id": tweet_id},
         "linked_urls": linked_urls,
     }
+
+
+async def _fetch_x_article(tweet_url: str) -> str | None:
+    """Fetch the full text of an X Article via Jina Reader.
+    
+    X Articles are long-form posts whose content isn't in the API response.
+    Jina Reader (r.jina.ai) can extract the full article text.
+    """
+    try:
+        async with httpx.AsyncClient(follow_redirects=True, timeout=20) as client:
+            resp = await client.get(
+                f"https://r.jina.ai/{tweet_url}",
+                headers={"Accept": "text/plain"},
+            )
+            if resp.status_code == 200 and len(resp.text) > 200:
+                content = resp.text.strip()
+                # Jina prepends metadata lines (Title:, URL Source:, etc.)
+                # Find the actual content after "Markdown Content:" marker
+                marker = "Markdown Content:"
+                idx = content.find(marker)
+                if idx != -1:
+                    content = content[idx + len(marker):].strip()
+                return content
+    except Exception:
+        pass
+    
+    return None

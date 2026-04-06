@@ -822,6 +822,7 @@ function renderSources() {
         <div class="source-row" data-id="${s.id}">
           <span class="badge badge-${s.source_type || 'article'}">${s.source_type || '?'}</span>
           <span class="source-title">${escHtml(s.title || s.url || 'Untitled')}</span>
+          ${s.author ? '<span style="color:var(--text-secondary);font-size:12px;white-space:nowrap">' + escHtml(s.author) + '</span>' : ''}
           <span class="source-date">${formatDate(s.ingested_at)}</span>
           <span class="enrichment-dot ${s.enrichment_status || 'pending'}" title="${s.enrichment_status || 'pending'}"></span>
         </div>`;

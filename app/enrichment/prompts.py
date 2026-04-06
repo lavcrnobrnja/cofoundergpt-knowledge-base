@@ -10,7 +10,7 @@ Return JSON:
     "summary": "2-4 sentence plain text overview",
     "key_insights": ["3-5 actionable insight strings"],
     "author": "author name if detectable (e.g. host or writer), else null",
-    "guests": ["names of interviewees or guests if any"]
+    "guests": ["names of interviewees or guests — ONLY for interviews, podcasts, and panel discussions. Leave empty for articles, tweets, essays, and other non-interview content."]
 }}"""
 
 EXTRACTION_PROMPT = """Extract entities and assign topics for this source.

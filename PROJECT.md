@@ -59,14 +59,13 @@ source .venv/bin/activate && pytest -v
 ## Source Types
 article, youtube, tweet, substack, quote, voice_memo, pdf
 
-## Current State (Apr 4, 2026)
-73 tests passing. Service live. All endpoints verified. Dashboard live at http://127.0.0.1:8555/.
+## Current State (Apr 5, 2026)
+Service live. Dashboard at http://127.0.0.1:8555/ defaults to Sources tab.
 
-- Gemini key (s31E) configured and working. Enrichment pipeline fully functional.
-- Native Twitter ingest via `xurl` implemented, skipping scrapers and pulling actual tweet text via API wrapper.
-- 2 sources ingested (Marc Andreessen / Lenny's Podcast, Karpathy LLM KB tweet), 6 topics, 39 chunks.
-- Wiki pages created but not yet compiled (need 3+ sources per topic to trigger).
-- Dashboard shows source detail with: Your Notes, Summary, Key Insights, Entities, Topics, Pipeline.
+- Gemini key configured and working. Enrichment pipeline fully functional.
+- Native Twitter ingest via `xurl` implemented, skipping scrapers. Handles long-form X Articles by extracting `article.title` from the raw API payload.
+- Added `guests` extraction explicitly to the pipeline schemas and SQLite table.
+- Dashboard shows source detail with: Title, Guest(s), Your Notes, Summary, Key Insights, Entities, Topics, Pipeline.
 - Nightly compile cron (5da29338) active, runs 3am ET on Flash Lite.
 
 ## Telegram Integration
