@@ -1,8 +1,7 @@
-"""Query synthesis — search → context assembly → Gemini Pro → answer."""
+"""Query synthesis — search → context assembly → Claude Opus → answer."""
 import re
 
-from google import genai
-from google.genai import types
+import anthropic
 
 from app import config
 from app.search import vector_search, wiki_search
@@ -58,8 +57,8 @@ async def synthesize_answer(query: str) -> dict:
             "related_topics": [],
         }
 
-    # Synthesize via Gemini Pro
-    client = genai.Client(api_key=config.GEMINI_API_KEY)
+    # Synthesize via Claude Opus
+    client = anthropic.Anthropic(api_key=config.ANTHROPIC_API_KEY)
     prompt = SYNTHESIS_PROMPT.format(
         query=query,
         wiki_context=wiki_context,
@@ -68,13 +67,14 @@ async def synthesize_answer(query: str) -> dict:
 
     import asyncio
     response = await asyncio.to_thread(
-        client.models.generate_content,
-        model=config.PRO_MODEL,
-        contents=prompt,
-        config=types.GenerateContentConfig(temperature=0.3),
+        client.messages.create,
+        model=config.OPUS_MODEL,
+        max_tokens=4096,
+        temperature=0.3,
+        messages=[{"role": "user", "content": prompt}],
     )
 
-    answer = response.text
+    answer = response.content[0].text
 
     # Extract related topics from answer (look for [[topic]] patterns)
     related_topics = re.findall(r'\[\[([^\]]+)\]\]', answer)

@@ -43,10 +43,12 @@ async def _link_source_to_page(page_id, source_id):
         await db.commit()
 
 
-def _mock_gemini_response(text):
-    """Create a mock Gemini response."""
+def _mock_anthropic_response(text):
+    """Create a mock Anthropic response."""
+    mock_block = MagicMock()
+    mock_block.text = text
     mock_resp = MagicMock()
-    mock_resp.text = text
+    mock_resp.content = [mock_block]
     return mock_resp
 
 
@@ -80,12 +82,12 @@ Related to [[other-topic]]
 ## Open Questions
 - What about X?"""
 
-    with patch("app.compile.compiler.get_gemini_client") as mock_client_fn, \
+    with patch("app.compile.compiler.get_anthropic_client") as mock_client_fn, \
          patch("app.compile.compiler.embed_text", new_callable=AsyncMock) as mock_embed, \
          patch("app.compile.compiler.regenerate_index", new_callable=AsyncMock) as mock_regen:
 
         mock_client = MagicMock()
-        mock_client.models.generate_content.return_value = _mock_gemini_response(compiled_content)
+        mock_client.messages.create.return_value = _mock_anthropic_response(compiled_content)
         mock_client_fn.return_value = mock_client
         mock_embed.return_value = _mock_embed_result()
 
@@ -135,12 +137,12 @@ async def test_compile_nightly_with_stale(setup_temp_db):
 
     compiled_content = "# Stale Topic\n## Overview\nCompiled."
 
-    with patch("app.compile.compiler.get_gemini_client") as mock_client_fn, \
+    with patch("app.compile.compiler.get_anthropic_client") as mock_client_fn, \
          patch("app.compile.compiler.embed_text", new_callable=AsyncMock) as mock_embed, \
          patch("app.compile.compiler.regenerate_index", new_callable=AsyncMock):
 
         mock_client = MagicMock()
-        mock_client.models.generate_content.return_value = _mock_gemini_response(compiled_content)
+        mock_client.messages.create.return_value = _mock_anthropic_response(compiled_content)
         mock_client_fn.return_value = mock_client
         mock_embed.return_value = _mock_embed_result()
 
@@ -169,12 +171,12 @@ Too broad.
 
 SPLIT_SUGGESTED: ["Subtopic A", "Subtopic B"]"""
 
-    with patch("app.compile.compiler.get_gemini_client") as mock_client_fn, \
+    with patch("app.compile.compiler.get_anthropic_client") as mock_client_fn, \
          patch("app.compile.compiler.embed_text", new_callable=AsyncMock) as mock_embed, \
          patch("app.compile.compiler.regenerate_index", new_callable=AsyncMock):
 
         mock_client = MagicMock()
-        mock_client.models.generate_content.return_value = _mock_gemini_response(compiled_content)
+        mock_client.messages.create.return_value = _mock_anthropic_response(compiled_content)
         mock_client_fn.return_value = mock_client
         mock_embed.return_value = _mock_embed_result()
 
@@ -198,12 +200,12 @@ async def test_compile_writes_disk_file(setup_temp_db, tmp_path):
 
     compiled_content = "# Disk Topic\n## Overview\nWritten to disk."
 
-    with patch("app.compile.compiler.get_gemini_client") as mock_client_fn, \
+    with patch("app.compile.compiler.get_anthropic_client") as mock_client_fn, \
          patch("app.compile.compiler.embed_text", new_callable=AsyncMock) as mock_embed, \
          patch("app.compile.compiler.regenerate_index", new_callable=AsyncMock):
 
         mock_client = MagicMock()
-        mock_client.models.generate_content.return_value = _mock_gemini_response(compiled_content)
+        mock_client.messages.create.return_value = _mock_anthropic_response(compiled_content)
         mock_client_fn.return_value = mock_client
         mock_embed.return_value = _mock_embed_result()
 

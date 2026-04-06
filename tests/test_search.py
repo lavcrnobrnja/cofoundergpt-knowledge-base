@@ -202,15 +202,17 @@ async def test_synthesize_with_sources(setup_temp_db):
         {"slug": "ai", "title": "Artificial Intelligence", "content": "AI overview", "score": 0.9}
     ]
 
+    mock_block = MagicMock()
+    mock_block.text = "AI is indeed transforming everything. Related topics: [[machine learning]], [[automation]]"
     mock_response = MagicMock()
-    mock_response.text = "AI is indeed transforming everything. Related topics: [[machine learning]], [[automation]]"
+    mock_response.content = [mock_block]
 
     mock_client = MagicMock()
-    mock_client.models.generate_content.return_value = mock_response
+    mock_client.messages.create.return_value = mock_response
 
     with patch("app.synthesis.vector_search", new_callable=AsyncMock, return_value=mock_sources), \
          patch("app.synthesis.wiki_search", new_callable=AsyncMock, return_value=mock_wiki), \
-         patch("app.synthesis.genai.Client", return_value=mock_client):
+         patch("app.synthesis.anthropic.Anthropic", return_value=mock_client):
         from app.synthesis import synthesize_answer
         result = await synthesize_answer("what is AI?")
 

@@ -1,12 +1,11 @@
-"""Wiki page compilation via Gemini Pro."""
+"""Wiki page compilation via Claude Opus."""
 import json
 import logging
 import os
 import re
 from datetime import datetime, timezone
 
-from google import genai
-from google.genai import types
+import anthropic
 
 from app import config
 from app.database import get_db
@@ -17,9 +16,9 @@ from app.compile.prompts import COMPILE_PROMPT
 logger = logging.getLogger(__name__)
 
 
-def get_gemini_client():
-    """Get or create Gemini client."""
-    return genai.Client(api_key=config.GEMINI_API_KEY)
+def get_anthropic_client():
+    """Get or create Anthropic client."""
+    return anthropic.Anthropic(api_key=config.ANTHROPIC_API_KEY)
 
 
 async def compile_topic(slug: str) -> dict:
@@ -94,16 +93,17 @@ async def compile_topic(slug: str) -> dict:
         index_context=index_context or "No other topics yet.",
     )
 
-    # 5. Call Gemini Pro
-    client = get_gemini_client()
+    # 5. Call Claude Opus
+    client = get_anthropic_client()
     import asyncio
     response = await asyncio.to_thread(
-        client.models.generate_content,
-        model=config.PRO_MODEL,
-        contents=prompt,
-        config=types.GenerateContentConfig(temperature=0.3),
+        client.messages.create,
+        model=config.OPUS_MODEL,
+        max_tokens=8192,
+        temperature=0.3,
+        messages=[{"role": "user", "content": prompt}],
     )
-    compiled_content = response.text
+    compiled_content = response.content[0].text
 
     # 6 & 7. Save to DB
     now = datetime.now(timezone.utc).isoformat()

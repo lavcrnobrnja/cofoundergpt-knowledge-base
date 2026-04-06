@@ -5,10 +5,14 @@ from pathlib import Path
 # Gemini API key — from environment, never hardcoded
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
 
-# Model names (spec-locked — do not modify)
+# Anthropic API key — from environment, never hardcoded
+ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
+
+# Model names
 FLASH_MODEL = "gemini-3-flash-preview"
 PRO_MODEL = "gemini-3.1-pro-preview"
 EMBEDDING_MODEL = "gemini-embedding-2-preview"
+OPUS_MODEL = "claude-opus-4-6"
 
 # Embedding dimensions
 EMBEDDING_DIMENSIONS = 3072
