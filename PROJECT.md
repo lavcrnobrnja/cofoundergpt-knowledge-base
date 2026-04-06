@@ -63,9 +63,10 @@ article, youtube, tweet, substack, quote, voice_memo, pdf
 Service live. Dashboard at http://127.0.0.1:8555/ defaults to Sources tab.
 
 - Gemini key configured and working. Enrichment pipeline fully functional.
-- Native Twitter ingest via `xurl` implemented, skipping scrapers. Handles long-form X Articles by extracting `article.title` from the raw API payload.
-- Added `guests` extraction explicitly to the pipeline schemas and SQLite table.
-- Dashboard shows source detail with: Title, Guest(s), Your Notes, Summary, Key Insights, Entities, Topics, Pipeline.
+- Native Twitter ingest via `xurl` implemented, skipping scrapers. Handles long-form X Articles by extracting `article.title` from the raw API payload AND fetching full article body via Jina Reader (`r.jina.ai`) since X API doesn't return article content.
+- Author resolution for tweets uses `includes.users` from xurl response (not raw numeric `author_id`).
+- `guests` extraction restricted to interviews/podcasts/panels only (not articles/tweets/essays).
+- Dashboard shows author on source list cards AND in detail popup. Detail also shows: Title, Guest(s), Your Notes, Summary, Key Insights, Entities, Topics, Pipeline.
 - Nightly compile cron (5da29338) active, runs 3am ET on Flash Lite.
 
 ## Telegram Integration
