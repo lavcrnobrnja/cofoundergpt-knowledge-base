@@ -61,7 +61,7 @@ async def rebuild_backlinks() -> dict:
     return backlinks
 
 
-async def compile_topic(slug: str) -> dict:
+async def compile_topic(slug: str, *, skip_index_rebuild: bool = False) -> dict:
     """Compile a single wiki page from its linked sources.
 
     1. Get wiki page from DB
@@ -74,9 +74,14 @@ async def compile_topic(slug: str) -> dict:
     8. Update source_count, last_compiled_at, stale = 0
     9. Re-embed the wiki page content → update wiki_pages.embedding
     10. Write wiki/{slug}.md to disk (projection)
-    11. Regenerate _index.md
-    12. Rebuild backlinks index
+    11. Regenerate _index.md (unless skip_index_rebuild)
+    12. Rebuild backlinks index (unless skip_index_rebuild)
     13. Check for SPLIT_SUGGESTED in output → log if found
+
+    Args:
+        slug: Wiki page slug to compile.
+        skip_index_rebuild: If True, skip regenerate_index + rebuild_backlinks.
+            Used by compile_nightly to batch these at the end.
 
     Returns: {"slug": str, "title": str, "source_count": int, "compiled": True}
     """
@@ -189,11 +194,10 @@ async def compile_topic(slug: str) -> dict:
     wiki_file = config.WIKI_DIR / f"{slug}.md"
     wiki_file.write_text(compiled_content)
 
-    # 11. Regenerate index
-    await regenerate_index()
-
-    # 12. Rebuild backlinks index
-    await rebuild_backlinks()
+    # 11. Regenerate index + 12. Rebuild backlinks (skip in batch mode)
+    if not skip_index_rebuild:
+        await regenerate_index()
+        await rebuild_backlinks()
 
     # 13. Check for SPLIT_SUGGESTED
     result = {
@@ -229,12 +233,17 @@ async def compile_nightly() -> dict:
     results = {"compiled": 0, "failed": 0, "skipped": 0, "details": []}
     for row in stale:
         try:
-            result = await compile_topic(row[0])
+            result = await compile_topic(row[0], skip_index_rebuild=True)
             results["compiled"] += 1
             results["details"].append(result)
         except Exception as e:
             results["failed"] += 1
             results["details"].append({"slug": row[0], "error": str(e)})
             logger.error(f"Failed to compile '{row[0]}': {e}")
+
+    # Rebuild index and backlinks once after all compilations
+    if results["compiled"] > 0:
+        await regenerate_index()
+        await rebuild_backlinks()
 
     return results

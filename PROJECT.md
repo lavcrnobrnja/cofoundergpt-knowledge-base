@@ -53,7 +53,7 @@ source .venv/bin/activate && pytest -v
 - GET /wiki/{slug} — wiki page detail + linked sources
 - POST /wiki/{slug}/compile — force recompile
 - POST /compile/nightly — compile all stale topics
-- GET /backlinks — return current _backlinks.json (which pages link to which)
+- GET /backlinks — backlinks index (which pages link to which)
 - GET /health — health check
 - GET /stats — database statistics
 
@@ -69,7 +69,6 @@ article, youtube, tweet, quote, voice_memo, pdf
 - **Backlinks index:** `rebuild_backlinks()` in compiler.py scans all wiki pages for `[[slug]]` patterns, builds `{ target: [referring-slugs] }` map, writes to `wiki/_backlinks.json`. Called automatically after every `compile_topic()`.
 - **Compiler context:** Each compilation now includes which pages currently link to the topic (feeds better cross-references).
 - **Synthesis context:** Backlinks included per wiki page in synthesis prompt (suggests related reading).
-- **New endpoint:** GET /backlinks returns current backlinks JSON.
 - **_index.md:** Now includes a Backlinks count column.
 - **Tests:** 83/83 passing (10 new tests: backlinks extraction, piped wikilinks, self-refs, circular refs, JSON file write, compile integration, synthesis context, endpoint x2).
 
