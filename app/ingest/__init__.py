@@ -39,6 +39,10 @@ def detect_source_type(url: str) -> str:
     # if host.endswith(".substack.com"):
     #     return "substack"
 
+    # Podcasts
+    if host in ("www.acquired.fm", "acquired.fm"):
+        return "podcast"
+
     # Default
     return "article"
 
@@ -160,6 +164,10 @@ async def _extract(source_type: str, url: str, request: IngestRequest) -> dict:
         from app.ingest.pdf import extract_pdf
         path = url.replace("file://", "") if url.startswith("file://") else url
         return await extract_pdf(path)
+    elif source_type == "podcast":
+        # Podcasts use article extractor (transcript is on the page)
+        from app.ingest.article import extract_article
+        return await extract_article(url)
     else:
         # article, substack — both use article extractor
         from app.ingest.article import extract_article
